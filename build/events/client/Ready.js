@@ -11,7 +11,6 @@ export default class Ready extends Event {
     async execute() {
         console.log(`${this.client.user?.tag} is now ready `);
         const commands = this.getJson(this.client.commands);
-        console.log(commands);
         const rest = new REST().setToken(this.client.config.token);
         const setCommands = await rest.put(Routes.applicationGuildCommands(this.client.config.discordClientId, this.client.config.guildId), {
             body: commands
@@ -20,7 +19,6 @@ export default class Ready extends Event {
     }
     getJson(commands) {
         const data = [];
-        console.log(commands);
         commands.forEach(command => {
             data.push({
                 name: command.name,

@@ -4,5 +4,6 @@ export default class Handler implements IHandler {
     client: CustomClient;
     constructor(client: CustomClient);
     LoadEvents(): Promise<void>;
+    LoadCommands(): Promise<void>;
 }
 //# sourceMappingURL=Handler.d.ts.map

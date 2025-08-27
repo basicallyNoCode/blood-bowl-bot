@@ -34,5 +34,31 @@ export default class Handler {
             }
         }
     }
+    async LoadCommands() {
+        const files = (await glob(`build/commands/**/*.js`))
+            .map(filePath => path.resolve(filePath));
+        for (const file of files) {
+            try {
+                const module = await import(`file://${file}`);
+                if (typeof module.default !== "function") {
+                    throw new Error(`The default export of file ${file} is not a constructor`);
+                }
+                const command = new module.default(this.client);
+                if (!command.name) {
+                    console.log(`${file.split("/").pop()} does not have a name.`);
+                    return;
+                }
+                if (file.split("/").pop()?.split(".")[2]) {
+                    this.client.subCommands.set(command.name, command);
+                }
+                else {
+                    this.client.commands.set(command.name, command);
+                }
+            }
+            catch (error) {
+                console.error(error);
+            }
+        }
+    }
 }
 //# sourceMappingURL=Handler.js.map

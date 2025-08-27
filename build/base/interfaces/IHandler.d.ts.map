@@ -1,1 +1,1 @@
-{"version":3,"file":"IHandler.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/IHandler.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,OAAO,WAAW,QAAQ;IAC7B,UAAU,IAAI,IAAI,CAAC;CACtB"}
+{"version":3,"file":"IHandler.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/IHandler.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,OAAO,WAAW,QAAQ;IAC7B,UAAU,IAAI,IAAI,CAAC;IACnB,YAAY,IAAI,IAAI,CAAC;CACxB"}

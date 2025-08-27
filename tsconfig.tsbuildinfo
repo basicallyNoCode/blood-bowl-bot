@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/base/classes/customclient.ts","./src/base/classes/event.ts","./src/base/classes/handler.ts","./src/base/interfaces/iconfig.ts","./src/base/interfaces/icustomclient.ts","./src/base/interfaces/ievent.ts","./src/base/interfaces/ieventoptions.ts","./src/base/interfaces/ihandler.ts","./src/events/client/ready.ts"],"errors":true,"version":"5.9.2"}

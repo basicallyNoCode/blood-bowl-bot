@@ -1,0 +1,16 @@
+{
+  "name": "bloodbowl-bot",
+  "version": "1.0.0",
+  "description": "Bot zur Erfassung von Liga ergebnissen",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc --build",
+    "start": "npm run build && node build/index.js"
+  },
+  "author": "basicallynocode",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.22.1",
+    "glob": "^11.0.3"
+  }
+}

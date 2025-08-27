@@ -39,7 +39,7 @@
     "allowSyntheticDefaultImports": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "skipLibCheck": true,
   }
 }

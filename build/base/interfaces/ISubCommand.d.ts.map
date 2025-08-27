@@ -1,1 +1,0 @@
-{"version":3,"file":"ISubCommand.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/ISubCommand.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,2BAA2B,EAAE,MAAM,YAAY,CAAC;AACzD,OAAO,YAAY,MAAM,4BAA4B,CAAC;AAEtD,MAAM,CAAC,OAAO,WAAW,WAAW;IAChC,MAAM,EAAE,YAAY,CAAC;IACrB,IAAI,EAAE,MAAM,CAAC;IAEb,OAAO,CAAC,WAAW,EAAE,2BAA2B,GAAG,IAAI,CAAC;CAC3D"}

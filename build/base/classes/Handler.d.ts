@@ -1,5 +1,5 @@
-import CustomClient from "./CustomClient";
-import IHandler from "../interfaces/IHandler";
+import CustomClient from "./CustomClient.js";
+import IHandler from "../interfaces/IHandler.js";
 export default class Handler implements IHandler {
     client: CustomClient;
     constructor(client: CustomClient);

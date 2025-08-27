@@ -1,7 +1,8 @@
 import { Client } from "discord.js";
-import ICustomClient from "../interfaces/ICustomClient";
-import IConfig from "../interfaces/IConfig";
-import Handler from "./Handler";
+import ICustomClient from "../interfaces/ICustomClient.js";
+import IConfig from "../interfaces/IConfig.js";
+import Handler from "./Handler.js";
+import config from "../../../data/config.json" with {type: "json"};
 
 export default class CustomClient extends Client implements ICustomClient{
     
@@ -10,7 +11,7 @@ export default class CustomClient extends Client implements ICustomClient{
 
     constructor (){
         super({intents: []});
-        this.config = require(`${process.cwd()}/data/config.json`)
+        this.config = config
         this.handler = new Handler(this);
     }
     

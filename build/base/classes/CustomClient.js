@@ -1,17 +1,13 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const discord_js_1 = require("discord.js");
-const Handler_1 = __importDefault(require("./Handler"));
-class CustomClient extends discord_js_1.Client {
+import { Client } from "discord.js";
+import Handler from "./Handler.js";
+import config from "../../../data/config.json" with { type: "json" };
+export default class CustomClient extends Client {
     config;
     handler;
     constructor() {
         super({ intents: [] });
-        this.config = require(`${process.cwd()}/data/config.json`);
-        this.handler = new Handler_1.default(this);
+        this.config = config;
+        this.handler = new Handler(this);
     }
     init() {
         this.LoadHandlers();
@@ -22,5 +18,4 @@ class CustomClient extends discord_js_1.Client {
         this.handler.LoadEvents();
     }
 }
-exports.default = CustomClient;
 //# sourceMappingURL=CustomClient.js.map

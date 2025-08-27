@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class Event {
+export default class Event {
     client;
     name;
     description;
@@ -14,5 +12,4 @@ class Event {
     execute(...args) { }
     ;
 }
-exports.default = Event;
 //# sourceMappingURL=Event.js.map

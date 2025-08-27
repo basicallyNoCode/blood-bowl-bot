@@ -1,1 +1,1 @@
-{"version":3,"file":"Ready.d.ts","sourceRoot":"","sources":["../../../src/events/client/Ready.ts"],"names":[],"mappings":"AACA,OAAO,YAAY,MAAM,iCAAiC,CAAC;AAC3D,OAAO,KAAK,MAAM,0BAA0B,CAAC;AAE7C,MAAM,CAAC,OAAO,OAAO,KAAM,SAAQ,KAAK;gBACxB,MAAM,EAAE,YAAY;IAOhC,OAAO;CAGV"}
+{"version":3,"file":"Ready.d.ts","sourceRoot":"","sources":["../../../src/events/client/Ready.ts"],"names":[],"mappings":"AACA,OAAO,YAAY,MAAM,oCAAoC,CAAC;AAC9D,OAAO,KAAK,MAAM,6BAA6B,CAAC;AAEhD,MAAM,CAAC,OAAO,OAAO,KAAM,SAAQ,KAAK;gBACxB,MAAM,EAAE,YAAY;IAOhC,OAAO;CAGV"}

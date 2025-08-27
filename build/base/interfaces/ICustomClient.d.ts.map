@@ -1,1 +1,1 @@
-{"version":3,"file":"ICustomClient.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/ICustomClient.ts"],"names":[],"mappings":"AAAA,OAAO,OAAO,MAAM,WAAW,CAAA;AAE/B,MAAM,CAAC,OAAO,WAAW,aAAa;IAClC,MAAM,EAAE,OAAO,CAAC;IAEhB,IAAI,IAAI,IAAI,CAAC;IACb,YAAY,IAAI,IAAI,CAAC;CACxB"}
+{"version":3,"file":"ICustomClient.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/ICustomClient.ts"],"names":[],"mappings":"AAAA,OAAO,OAAO,MAAM,cAAc,CAAA;AAElC,MAAM,CAAC,OAAO,WAAW,aAAa;IAClC,MAAM,EAAE,OAAO,CAAC;IAEhB,IAAI,IAAI,IAAI,CAAC;IACb,YAAY,IAAI,IAAI,CAAC;CACxB"}

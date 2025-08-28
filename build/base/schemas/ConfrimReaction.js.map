@@ -1,0 +1,1 @@
+{"version":3,"file":"ConfrimReaction.js","sourceRoot":"","sources":["../../../src/base/schemas/ConfrimReaction.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,EAAY,MAAM,EAAE,MAAM,UAAU,CAAC;AAInD,eAAe,KAAK,CAAmB,iBAAiB,EAAE,IAAI,MAAM,CAAmB;IACnF,UAAU,EAAE,MAAM;IAClB,QAAQ,EAAE,MAAM;IAChB,QAAQ,EAAE,MAAM;CACnB,EACD;IACI,UAAU,EAAE,IAAI;CACnB,CAAC,CAAC,CAAA"}

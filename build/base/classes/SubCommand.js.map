@@ -1,0 +1,1 @@
+{"version":3,"file":"SubCommand.js","sourceRoot":"","sources":["../../../src/base/classes/SubCommand.ts"],"names":[],"mappings":"AAKA,MAAM,CAAC,OAAO,OAAO,UAAU;IAC3B,MAAM,CAAe;IACrB,IAAI,CAAS;IAEb,YAAY,MAAqB,EAAE,OAA0B;QACzD,IAAI,CAAC,MAAM,GAAG,MAAM,CAAC;QACrB,IAAI,CAAC,IAAI,GAAG,OAAO,CAAC,IAAI,CAAC;IAC7B,CAAC;IAGD,OAAO,CAAC,WAAwC;IAChD,CAAC;CAEJ"}

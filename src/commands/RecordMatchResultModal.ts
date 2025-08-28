@@ -1,8 +1,11 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, ComponentType, Events, Message, PermissionsBitField, TextInputStyle } from "discord.js";
+import { ApplicationCommandOptionType, ChatInputCommandInteraction, Collection, ComponentType, Events, Message, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
+import Matches from "../base/schemas/UnConfirmedMatches.js";
+import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
+import mongoose from "mongoose";
 
 export default class RecordMatchResultModal extends Command{
     constructor(client: CustomClient){
@@ -79,12 +82,35 @@ export default class RecordMatchResultModal extends Command{
                 const casString = `Außerdem wurden ${casForValue} von ${interaction.user} zugefügte Casualties und ${casAgainstValue} von ${opponent} zugefügte Casualties angegeben`;
 
                 modalInteraction.reply({content: `Dein eingegebenes Spielergebnis für die begegnung ${interaction.user} gegen ${opponent}, ${resultString} mit einem Ergebnis von ${interaction.user}: ${tdForValue} und ${opponent}: ${tdAgainstValue}. \n${casString}. \nBitte Angaben bestätigen ${opponent}`, withResponse:true})
-                    /*.then(async (messageToBeConfirmed)=> {
-                        console.log(messageToBeConfirmed.resource?.message)
-                        if (messageToBeConfirmed.resource?.message instanceof Message) {
+                    .then(async (messageToBeConfirmed)=> {
+                        if (messageToBeConfirmed.resource?.message) {
                             await messageToBeConfirmed.resource?.message.react('👍');
+                            await messageToBeConfirmed.resource?.message.react('❌')
+                            this.client.unConfirmedMatches.set(messageToBeConfirmed.resource.message.id, 
+                                {
+                                    matchResultId: messageToBeConfirmed.resource.message.id,
+                                    authorId: interaction.user.id,
+                                    opponentId: opponent!.id,
+                                    tdFor: parseInt(tdForValue),
+                                    tdAgainst: parseInt(tdAgainstValue),
+                                    casFor: parseInt(casForValue),
+                                    casAgainst: parseInt(casAgainstValue),
+                                    confirmReactions: [],
+                                }
+                            )
+                            if(!await UnConfirmedMatches.exists({matchResultId: messageToBeConfirmed.resource.message.id}))
+                            await UnConfirmedMatches.create({
+                                matchResultId: messageToBeConfirmed.resource.message.id,
+                                authorId: interaction.user.id,
+                                opponentId: opponent!.id,
+                                tdFor: parseInt(tdForValue),
+                                tdAgainst: parseInt(tdAgainstValue),
+                                casFor: parseInt(casForValue),
+                                casAgainst: parseInt(casAgainstValue),
+                                confirmReactions: []
+                            })
                         }
-                    })*/
+                    })
 
             }).catch((error)=> console.error(error)) 
     }

@@ -7,7 +7,7 @@ export default model("UnConfirmedMatches", new Schema({
     tdAgainst: Number,
     casFor: Number,
     casAgainst: Number,
-    confirmReactions: [{ type: String, ref: "ConfirmReaction" }],
+    confirmReactions: [{ type: String, ref: "ConfirmReactionEntry" }],
 }, {
     timestamps: true
 }));

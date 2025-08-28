@@ -3,7 +3,6 @@ import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
-import Matches from "../base/schemas/UnConfirmedMatches.js";
 import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
 import mongoose from "mongoose";
 

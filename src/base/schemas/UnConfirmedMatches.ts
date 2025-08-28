@@ -1,6 +1,5 @@
 import { model, ObjectId, Schema } from "mongoose";
 import IMatchResult from "../interfaces/IMatchResult.js";
-import ConfrimReaction from "./ConfrimReaction.js";
 
 
 export default model<IMatchResult>("UnConfirmedMatches", new Schema<IMatchResult>({
@@ -11,7 +10,7 @@ export default model<IMatchResult>("UnConfirmedMatches", new Schema<IMatchResult
     tdAgainst: Number,
     casFor: Number,
     casAgainst: Number,
-    confirmReactions: [{type: String, ref: "ConfirmReaction"}],
+    confirmReactions: [{type: String, ref: "ConfirmReactionEntry"}],
 },
 {
     timestamps: true

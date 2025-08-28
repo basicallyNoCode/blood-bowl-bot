@@ -1,6 +1,8 @@
 import { Events } from "discord.js";
 import Event from "../../base/classes/Event.js";
 import ConfirmRections from "../../base/enums/ConfirmReactions.js";
+import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
+import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
 export default class ConfirmReactionAdded extends Event {
     constructor(client) {
         super(client, {
@@ -9,13 +11,26 @@ export default class ConfirmReactionAdded extends Event {
             once: false
         });
     }
-    execute(reaction, user) {
+    async execute(reaction, user) {
         if (reaction.message.author.id == this.client.user?.id) {
             const unConfrimedMatch = this.client.unConfirmedMatches.get(reaction.message.id);
             if (unConfrimedMatch) {
                 if (!user.bot && (user.id == unConfrimedMatch.authorId || user.id == unConfrimedMatch.opponentId)) {
                     if (reaction.emoji.name == ConfirmRections.CONFIRM) {
                         unConfrimedMatch.confirmReactions.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id, authorId: user.id, reaction: ConfirmRections.CONFIRM });
+                        await ConfirmReactionEntry.create({
+                            reactionId: reaction.message.id + user.id + reaction.emoji.id,
+                            authorId: user.id,
+                            reaction: ConfirmRections.CONFIRM
+                        });
+                        const uCM = await UnConfirmedMatches.find({ matchResultId: reaction.message.id });
+                        const uCMReactions = uCM.at(0)?.confirmReactions;
+                        uCMReactions?.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id,
+                            authorId: user.id,
+                            reaction: ConfirmRections.CONFIRM });
+                        await UnConfirmedMatches.updateOne({ matchResultId: reaction.message.id }, {
+                            reaction: uCMReactions
+                        });
                     }
                     else if (reaction.emoji.name == ConfirmRections.DENY) {
                         unConfrimedMatch.confirmReactions.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id, authorId: user.id, reaction: ConfirmRections.DENY });

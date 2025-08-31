@@ -46,7 +46,7 @@ export default class RemoveDivision extends Command{
                 {
                     name: "matchday",
                     description: "Nutzer",
-                    type: ApplicationCommandOptionType.User,
+                    type: ApplicationCommandOptionType.Number,
                     required: true
                 }
             ]
@@ -55,7 +55,6 @@ export default class RemoveDivision extends Command{
 
     async execute(interaction: ChatInputCommandInteraction){
         const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${interaction.options.getString("competition")!}`})
-        console.log(competition)
         if(!competition){
             interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")!} existiert nicht`)
             return
@@ -69,15 +68,15 @@ export default class RemoveDivision extends Command{
 
         const match = await Match.find(
             {
-                divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
+                divisionId: division.divisionId,
                 playerOne: interaction.options.getUser("player1")?.id,
-                playerTwo: interaction.options.getUser("player1")?.id,
-                matchDay: interaction.options.getUser("matchday"),
+                playerTwo: interaction.options.getUser("player2")?.id,
+                matchDay: interaction.options.getNumber("matchday"),
                 gamePlayedAndConfirmed: false,
             });
 
         if(match.length === 0){
-            interaction.reply(`Das angegebene Match in der division  ${interaction.options.getString("division-name")!} existiert entweder nicht oder ist bereits confrimed und kann nicht mehr gelöscht werden.`)
+            interaction.reply(`Das angegebene Match in der division  ${interaction.options.getString("division-name")!} existiert entweder nicht oder ist bereits confirmed und kann nicht mehr gelöscht werden.`)
             return
         }
         
@@ -92,8 +91,8 @@ export default class RemoveDivision extends Command{
             {
                 divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
                 playerOne: interaction.options.getUser("player1")?.id,
-                playerTwo: interaction.options.getUser("player1")?.id,
-                matchDay: interaction.options.getUser("matchday"),
+                playerTwo: interaction.options.getUser("player2")?.id,
+                matchDay: interaction.options.getNumber("matchday"),
             });
         interaction.reply("Match erfolgreich entfernt");
     }

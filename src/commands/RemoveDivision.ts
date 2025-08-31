@@ -35,7 +35,6 @@ export default class RemoveDivision extends Command{
     async execute(interaction: ChatInputCommandInteraction){
         const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${interaction.options.getString("competition")!}`})
             .populate('divisions');
-        console.log(competition)
         if(!competition){
             interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")!} existiert nicht`)
             return

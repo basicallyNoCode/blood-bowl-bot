@@ -3,7 +3,7 @@ import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
 import Division from "../base/schemas/Division.js";
-export default class CreateDivison extends Command {
+export default class AddDivision extends Command {
     constructor(client) {
         super(client, {
             name: "adddivision",

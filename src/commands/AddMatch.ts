@@ -73,7 +73,6 @@ export default class AddAttendend extends Command{
             playerTwo: interaction.options.getUser("player2")?.id,
             gamePlayedAndConfirmed: false,
             playerResults: [],
-            winner: "",
             matchDay: interaction.options.getNumber("matchday")
         })
 

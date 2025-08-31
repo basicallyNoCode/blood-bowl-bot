@@ -6,6 +6,8 @@ import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
 import mongoose from "mongoose";
 import IMatchResult from "../../base/interfaces/IMatchResult.js";
+import Match from "../../base/schemas/Match.js";
+import PlayerResult from "../../base/schemas/PlayerResult.js";
 
 export default class ConfirmReactionAdded extends Event{
 
@@ -61,10 +63,48 @@ export default class ConfirmReactionAdded extends Event{
                         }
                         if (checkableMatchResult.confirmReactions.length >= 2){
                             if(checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length == 2){
+                                
+                                const match = await Match.find({
+                                    matchDay: checkableMatchResult.matchDay,
+                                    $or: [
+                                        {
+                                            playerOne: user?.id,
+                                            playerTwo: reaction.message.guild?.members.cache.get(nonReactionPlayer)?.id,
+                                        },
+                                        {
+                                            playerOne: reaction.message.guild?.members.cache.get(nonReactionPlayer)?.id,
+                                            playerTwo: user?.id,
+                                        },
+                                    ],
+                                })
+                                if(match.length !==0){
+                                    reaction.message.reply(`Das angegebene Match existiert nicht`)
+                                    return
+                                }
+
+                                const playerResultPlayer1 = new PlayerResult({
+                                    userId: checkableMatchResult.authorId,
+                                    touchdonws: checkableMatchResult.tdFor,
+                                    casualties: checkableMatchResult.casFor
+                                })
+
+                                const playerResultPlayer2 = new PlayerResult({
+                                    userId: checkableMatchResult.authorId,
+                                    touchdonws: checkableMatchResult.tdFor,
+                                    casualties: checkableMatchResult.casFor
+                                })
+
+                                await playerResultPlayer1.save();
+                                await playerResultPlayer2.save();
+            
+                                //@ts-ignore
+                                match[0]?.playerResults.push(playerResultPlayer1._id, playerResultPlayer2._id)
+                                match[0]!.gamePlayedAndConfirmed = true,
+                                match[0]!.save();
+
                                 reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
                                 matchConfirmed = true
-                                
-                            }
+                            }   
                         }
                         if(matchConfirmed){
                             this.cleanDatabase(messageId);

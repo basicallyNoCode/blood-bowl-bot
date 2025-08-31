@@ -21,7 +21,13 @@ export default class RecordMatchResultModal extends Command{
                     description: "Wähle deinen Gegner aus",
                     type: ApplicationCommandOptionType.User,
                     required: true
-                }
+                },
+                {
+                    name: "matchday",
+                    description: "Spieltag angeben",
+                    type: ApplicationCommandOptionType.Number,
+                    required: true
+                },
             ]
         })
     }
@@ -94,7 +100,8 @@ export default class RecordMatchResultModal extends Command{
                                 tdAgainst: parseInt(tdAgainstValue),
                                 casFor: parseInt(casForValue),
                                 casAgainst: parseInt(casAgainstValue),
-                                confirmReactions: []
+                                confirmReactions: [],
+                                matchDay: interaction.options.getNumber("matchday")
                             })
                         }
                     })

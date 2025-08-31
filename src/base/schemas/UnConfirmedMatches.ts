@@ -14,6 +14,7 @@ export default model<IMatchResult>("UnConfirmedMatches", new Schema<IMatchResult
         confirmReactions: [
             { type: Schema.Types.ObjectId, ref: "ConfirmReactionEntry" },
         ],
+        matchDay: {type: Number, required: true}
     },
     {
         timestamps: true,

@@ -12,6 +12,24 @@ export default class ConfirmReactionRemoved extends Event {
         });
     }
     async execute(reaction, user) {
+        if (reaction.partial) {
+            try {
+                await reaction.fetch();
+            }
+            catch (error) {
+                console.error("Error fetching reaction:", error);
+                return;
+            }
+        }
+        if (reaction.message.partial) {
+            try {
+                await reaction.message.fetch();
+            }
+            catch (error) {
+                console.error("Error fetching message:", error);
+                return;
+            }
+        }
         if (reaction.message.author.id == this.client.user?.id) {
             const messageId = reaction.message.id;
             const unConfirmedMatch = await UnConfirmedMatches.findOne({ matchResultId: messageId }).populate("confirmReactions");

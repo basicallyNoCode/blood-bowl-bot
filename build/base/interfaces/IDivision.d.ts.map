@@ -1,0 +1,1 @@
+{"version":3,"file":"IDivision.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/IDivision.ts"],"names":[],"mappings":"AAAA,OAAO,MAAM,MAAM,aAAa,CAAA;AAChC,OAAO,kBAAkB,MAAM,yBAAyB,CAAA;AAExD,MAAM,CAAC,OAAO,WAAW,SAAS;IAC9B,OAAO,EAAE,MAAM,CAAC;IAChB,UAAU,EAAE,MAAM,CAAC;IACnB,kBAAkB,EAAE,kBAAkB,EAAE,CAAC;IACzC,OAAO,EAAE,MAAM,EAAE,CAAC;CACrB"}

@@ -63,6 +63,7 @@ export default class ConfirmReactionAdded extends Event{
                             if(checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length == 2){
                                 reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
                                 matchConfirmed = true
+                                
                             }
                         }
                         if(matchConfirmed){

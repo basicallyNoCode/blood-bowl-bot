@@ -1,1 +1,1 @@
-{"version":3,"file":"IConfirmReaction.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/IConfirmReaction.ts"],"names":[],"mappings":"AAAA,OAAO,eAAe,MAAM,8BAA8B,CAAC;AAE3D,MAAM,CAAC,OAAO,WAAW,gBAAgB;IACrC,UAAU,EAAE,MAAM,CAAC;IACnB,QAAQ,EAAE,MAAM,CAAC;IACjB,QAAQ,EAAE,eAAe,CAAC;CAC7B"}
+{"version":3,"file":"IConfirmReaction.d.ts","sourceRoot":"","sources":["../../../src/base/interfaces/IConfirmReaction.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,OAAO,WAAW,gBAAgB;IACrC,QAAQ,EAAE,MAAM,CAAC;IACjB,MAAM,EAAE,OAAO,CAAC;CACnB"}

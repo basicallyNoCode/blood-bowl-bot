@@ -85,18 +85,6 @@ export default class RecordMatchResultModal extends Command{
                         if (messageToBeConfirmed.resource?.message) {
                             await messageToBeConfirmed.resource?.message.react('👍');
                             await messageToBeConfirmed.resource?.message.react('❌')
-                            this.client.unConfirmedMatches.set(messageToBeConfirmed.resource.message.id, 
-                                {
-                                    matchResultId: messageToBeConfirmed.resource.message.id,
-                                    authorId: interaction.user.id,
-                                    opponentId: opponent!.id,
-                                    tdFor: parseInt(tdForValue),
-                                    tdAgainst: parseInt(tdAgainstValue),
-                                    casFor: parseInt(casForValue),
-                                    casAgainst: parseInt(casAgainstValue),
-                                    confirmReactions: [],
-                                }
-                            )
                             if(!await UnConfirmedMatches.exists({matchResultId: messageToBeConfirmed.resource.message.id}))
                             await UnConfirmedMatches.create({
                                 matchResultId: messageToBeConfirmed.resource.message.id,

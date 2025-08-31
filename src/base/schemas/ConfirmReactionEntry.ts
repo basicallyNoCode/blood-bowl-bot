@@ -3,13 +3,13 @@ import IConfirmReaction from "../interfaces/IConfirmReaction.js";
 
 
 interface IConfirmReactionEntry extends IConfirmReaction{
-    reactionId: ObjectId
+    matchResultId: string
 }
 
 export default model<IConfirmReactionEntry>("ConfirmReactionEntry", new Schema<IConfirmReactionEntry>({
-    reactionId: Schema.Types.ObjectId,
-    authorId: String,
-    reaction: String,
+    matchResultId: { type: String, required: true }, // Reference to the match
+    authorId: { type: String, required: true },
+    agreed: { type: Boolean, required: true },
 },
 {
     timestamps: true

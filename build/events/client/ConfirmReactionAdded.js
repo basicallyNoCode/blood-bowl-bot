@@ -12,59 +12,84 @@ export default class ConfirmReactionAdded extends Event {
         });
     }
     async execute(reaction, user) {
+        if (reaction.partial) {
+            try {
+                await reaction.fetch();
+            }
+            catch (error) {
+                console.error("Error fetching reaction:", error);
+                return;
+            }
+        }
+        if (reaction.message.partial) {
+            try {
+                await reaction.message.fetch();
+            }
+            catch (error) {
+                console.error("Error fetching message:", error);
+                return;
+            }
+        }
         if (reaction.message.author.id == this.client.user?.id) {
-            const unConfrimedMatch = this.client.unConfirmedMatches.get(reaction.message.id);
-            if (unConfrimedMatch) {
-                if (!user.bot && (user.id == unConfrimedMatch.authorId || user.id == unConfrimedMatch.opponentId)) {
-                    if (reaction.emoji.name == ConfirmRections.CONFIRM) {
-                        unConfrimedMatch.confirmReactions.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id, authorId: user.id, reaction: ConfirmRections.CONFIRM });
-                        await ConfirmReactionEntry.create({
-                            reactionId: reaction.message.id + user.id + reaction.emoji.id,
+            const messageId = reaction.message.id;
+            const unConfirmedMatch = await UnConfirmedMatches.findOne({ matchResultId: messageId }).populate("confirmReactions");
+            if (unConfirmedMatch) {
+                if (!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)) {
+                    if (reaction.emoji.name == ConfirmRections.CONFIRM || reaction.emoji.name == ConfirmRections.DENY) {
+                        const confirmReaction = new ConfirmReactionEntry({
+                            matchResultId: messageId,
                             authorId: user.id,
-                            reaction: ConfirmRections.CONFIRM
+                            agreed: this.isAgreed(reaction.emoji.name)
                         });
-                        const uCM = await UnConfirmedMatches.find({ matchResultId: reaction.message.id });
-                        const uCMReactions = uCM.at(0)?.confirmReactions;
-                        uCMReactions?.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id,
-                            authorId: user.id,
-                            reaction: ConfirmRections.CONFIRM });
-                        await UnConfirmedMatches.updateOne({ matchResultId: reaction.message.id }, {
-                            reaction: uCMReactions
-                        });
-                    }
-                    else if (reaction.emoji.name == ConfirmRections.DENY) {
-                        unConfrimedMatch.confirmReactions.push({ reactionId: reaction.message.id + user.id + reaction.emoji.id, authorId: user.id, reaction: ConfirmRections.DENY });
+                        await confirmReaction.save();
+                        //@ts-ignore cant get rid of this
+                        unConfirmedMatch.confirmReactions.push(confirmReaction._id);
+                        unConfirmedMatch.save();
                     }
                     else {
                         return;
                     }
-                    let nonReactionPlayer = "";
-                    if (user.id === unConfrimedMatch.authorId) {
-                        nonReactionPlayer = unConfrimedMatch.opponentId;
-                    }
-                    else if (user.id !== unConfrimedMatch.authorId) {
-                        nonReactionPlayer = unConfrimedMatch.authorId;
-                    }
-                    const matchPlayersConfirmReactions = unConfrimedMatch.confirmReactions.filter((confirmReaction) => {
-                        return confirmReaction.authorId == unConfrimedMatch.authorId || confirmReaction.authorId == unConfrimedMatch.opponentId;
-                    });
-                    if (matchPlayersConfirmReactions.filter((reaction) => reaction.reaction == ConfirmRections.DENY).length >= 1) {
-                        console.log("before", this.client.unConfirmedMatches.size);
-                        reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user}`);
-                        this.client.unConfirmedMatches.delete(reaction.message.id);
-                        console.log("after ", this.client.unConfirmedMatches.size);
-                    }
-                    if (matchPlayersConfirmReactions.length >= 2) {
-                        if (matchPlayersConfirmReactions.filter((reaction) => reaction.reaction == ConfirmRections.CONFIRM).length == 2) {
-                            console.log("push message to Database");
-                            reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`);
-                            this.client.unConfirmedMatches.delete(reaction.message.id);
+                    const nonReactionPlayer = this.getNonReactionPlayer(user.id, unConfirmedMatch);
+                    const checkableMatchResult = await UnConfirmedMatches.findOne({ matchResultId: messageId }).populate("confirmReactions");
+                    let matchConfirmed = false;
+                    if (checkableMatchResult) {
+                        if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == false).length >= 1) {
+                            reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user}`);
+                            matchConfirmed = true;
+                        }
+                        if (checkableMatchResult.confirmReactions.length >= 2) {
+                            if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length == 2) {
+                                reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`);
+                                matchConfirmed = true;
+                            }
+                        }
+                        if (matchConfirmed) {
+                            this.cleanDatabase(messageId);
                         }
                     }
-                    this.client.unConfirmedMatches.set(reaction.message.id, unConfrimedMatch);
                 }
             }
         }
+    }
+    isAgreed(emoji) {
+        if (emoji === ConfirmRections.DENY) {
+            return false;
+        }
+        if (emoji === ConfirmRections.CONFIRM) {
+            return true;
+        }
+    }
+    getNonReactionPlayer(reactionUserId, unConfrimedMatch) {
+        if (reactionUserId === unConfrimedMatch.authorId) {
+            return unConfrimedMatch.opponentId;
+        }
+        else if (reactionUserId !== unConfrimedMatch.authorId) {
+            return unConfrimedMatch.authorId;
+        }
+    }
+    async cleanDatabase(messageId) {
+        await ConfirmReactionEntry.deleteMany({ matchResultId: messageId });
+        await UnConfirmedMatches.deleteOne({ matchResultId: messageId });
     }
 }
 //# sourceMappingURL=ConfirmReactionAdded.js.map

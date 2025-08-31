@@ -1,4 +1,4 @@
-import { Client, Collection, IntentsBitField } from "discord.js";
+import { Client, Collection, IntentsBitField, Partials } from "discord.js";
 import Handler from "./Handler.js";
 import config from "../../../data/config.json" with { type: "json" };
 import dotenv from 'dotenv';
@@ -9,7 +9,6 @@ export default class CustomClient extends Client {
     commands;
     subCommands;
     cooldowns;
-    unConfirmedMatches;
     constructor() {
         super({ intents: [
                 IntentsBitField.Flags.Guilds,
@@ -17,13 +16,13 @@ export default class CustomClient extends Client {
                 IntentsBitField.Flags.GuildMessages,
                 IntentsBitField.Flags.MessageContent,
                 IntentsBitField.Flags.GuildMessageReactions,
-            ] });
+            ],
+            partials: [Partials.Channel, Partials.GuildMember, Partials.Reaction, Partials.Message, Partials.User], });
         this.config = config;
         this.handler = new Handler(this);
         this.commands = new Collection();
         this.subCommands = new Collection();
         this.cooldowns = new Collection();
-        this.unConfirmedMatches = new Collection;
     }
     init() {
         dotenv.config();

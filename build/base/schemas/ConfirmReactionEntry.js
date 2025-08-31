@@ -1,8 +1,8 @@
 import { model, Schema } from "mongoose";
 export default model("ConfirmReactionEntry", new Schema({
-    reactionId: String,
-    authorId: String,
-    reaction: String,
+    matchResultId: { type: String, required: true }, // Reference to the match
+    authorId: { type: String, required: true },
+    agreed: { type: Boolean, required: true },
 }, {
     timestamps: true
 }));

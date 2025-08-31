@@ -1,4 +1,4 @@
-import { Client, Collection, IntentsBitField } from "discord.js";
+import { Client, Collection, IntentsBitField, Partials } from "discord.js";
 import ICustomClient from "../interfaces/ICustomClient.js";
 import IConfig from "../interfaces/IConfig.js";
 import Handler from "./Handler.js";
@@ -16,7 +16,6 @@ export default class CustomClient extends Client implements ICustomClient{
     commands: Collection<string, Command>;
     subCommands: Collection<string, SubCommand>;
     cooldowns: Collection<string, Collection<string, number>>;
-    unConfirmedMatches: Collection<string,IMatchResult>;
 
     constructor (){
         super({intents: [
@@ -25,13 +24,13 @@ export default class CustomClient extends Client implements ICustomClient{
             IntentsBitField.Flags.GuildMessages,
             IntentsBitField.Flags.MessageContent,
             IntentsBitField.Flags.GuildMessageReactions,
-        ]});
+        ],
+        partials: [Partials.Channel, Partials.GuildMember, Partials.Reaction, Partials.Message, Partials.User],});
         this.config = config
         this.handler = new Handler(this);
         this.commands = new Collection();
         this.subCommands = new Collection();
         this.cooldowns = new Collection();
-        this.unConfirmedMatches = new Collection;
     }
     
     

@@ -1,14 +1,16 @@
 import { model, Schema } from "mongoose";
 export default model("UnConfirmedMatches", new Schema({
-    matchResultId: String,
-    authorId: String,
-    opponentId: String,
-    tdFor: Number,
-    tdAgainst: Number,
-    casFor: Number,
-    casAgainst: Number,
-    confirmReactions: [{ type: String, ref: "ConfirmReactionEntry" }],
+    matchResultId: { type: String, required: true, unique: true },
+    authorId: { type: String, required: true },
+    opponentId: { type: String, required: true },
+    tdFor: { type: Number, required: true },
+    tdAgainst: { type: Number, required: true },
+    casFor: { type: Number, required: true },
+    casAgainst: { type: Number, required: true },
+    confirmReactions: [
+        { type: Schema.Types.ObjectId, ref: "ConfirmReactionEntry" },
+    ],
 }, {
-    timestamps: true
+    timestamps: true,
 }));
 //# sourceMappingURL=UnConfirmedMatches.js.map

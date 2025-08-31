@@ -1,5 +1,8 @@
 import IConfirmReaction from "../interfaces/IConfirmReaction.js";
-declare const _default: import("mongoose").Model<IConfirmReaction, {}, {}, {}, import("mongoose").Document<unknown, {}, IConfirmReaction, {}, {}> & IConfirmReaction & {
+interface IConfirmReactionEntry extends IConfirmReaction {
+    matchResultId: string;
+}
+declare const _default: import("mongoose").Model<IConfirmReactionEntry, {}, {}, {}, import("mongoose").Document<unknown, {}, IConfirmReactionEntry, {}, {}> & IConfirmReactionEntry & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

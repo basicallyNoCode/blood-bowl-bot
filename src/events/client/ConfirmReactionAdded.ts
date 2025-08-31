@@ -5,6 +5,7 @@ import ConfirmRections from "../../base/enums/ConfirmReactions.js";
 import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
 import mongoose from "mongoose";
+import IMatchResult from "../../base/interfaces/IMatchResult.js";
 
 export default class ConfirmReactionAdded extends Event{
 
@@ -16,57 +17,82 @@ export default class ConfirmReactionAdded extends Event{
         })
     }
     async execute(reaction: MessageReaction, user: User){
+        if(reaction.partial){
+            try {
+                await reaction.fetch();
+            } catch (error) {
+                console.error("Error fetching reaction:", error);
+                return;
+            }
+        }
+        if (reaction.message.partial) {
+            try {
+                await reaction.message.fetch();
+            } catch (error) {
+                console.error("Error fetching message:", error);
+                return;
+            }
+        }
         if(reaction.message.author!.id == this.client.user?.id!){
-            const unConfrimedMatch = this.client.unConfirmedMatches.get(reaction.message.id);
-            if(unConfrimedMatch){
-                if(!user.bot && (user.id == unConfrimedMatch.authorId || user.id == unConfrimedMatch.opponentId)){
-                    if(reaction.emoji.name == ConfirmRections.CONFIRM){
-                        unConfrimedMatch.confirmReactions.push({ authorId:user.id, reaction: ConfirmRections.CONFIRM});
-                        // const reactionId = new mongoose.Types.ObjectId;
-                        // await ConfirmReactionEntry.create({
-                        //     reactionId: reactionId, 
-                        //     authorId:user.id,
-                        //     reaction: ConfirmRections.CONFIRM
-                        // })
-                        // const uCM = await UnConfirmedMatches.find({matchResultId: reaction.message.id});
-                        // const uCMReactions = uCM.at(0)?.confirmReactions;
-                        // uCMReactions?.push({
-                        //     authorId:user.id,
-                        //     reaction: ConfirmRections.CONFIRM});
-                        // await UnConfirmedMatches.updateOne({matchResultId: reaction.message.id}, {
-                        //     reaction: uCMReactions
-                        // })
-                    }else if(reaction.emoji.name == ConfirmRections.DENY){
-                        unConfrimedMatch.confirmReactions.push({authorId:user.id, reaction: ConfirmRections.DENY});
+            const messageId = reaction.message.id;
+            const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
+            if(unConfirmedMatch){
+                if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
+                    if(reaction.emoji.name == ConfirmRections.CONFIRM || reaction.emoji.name == ConfirmRections.DENY){
+                        const confirmReaction = new ConfirmReactionEntry({
+                            matchResultId: messageId,
+                            authorId: user.id,
+                            agreed: this.isAgreed(reaction.emoji.name)
+                        })
+                        await confirmReaction.save();
+                        //@ts-ignore cant get rid of this
+                        unConfirmedMatch.confirmReactions.push(confirmReaction._id);
+                        unConfirmedMatch.save();
                     }else{
                         return
                     }
-                    let nonReactionPlayer = ""
-                    if(user.id === unConfrimedMatch.authorId){
-                        nonReactionPlayer = unConfrimedMatch.opponentId
-                    }else if(user.id !== unConfrimedMatch.authorId){
-                        nonReactionPlayer = unConfrimedMatch.authorId
-                    }
-                    const matchPlayersConfirmReactions = unConfrimedMatch.confirmReactions.filter((confirmReaction)=> {
-                        return confirmReaction.authorId == unConfrimedMatch.authorId || confirmReaction.authorId == unConfrimedMatch.opponentId
-                    })
-                    if(matchPlayersConfirmReactions.filter((reaction)=> reaction.reaction == ConfirmRections.DENY).length >= 1){
-                        console.log("before", this.client.unConfirmedMatches.size)
-                        reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user}`)
-                        this.client.unConfirmedMatches.delete(reaction.message.id)
-                        console.log("after ", this.client.unConfirmedMatches.size)
-                    }
-                    if (matchPlayersConfirmReactions.length >= 2){
-                            if(matchPlayersConfirmReactions.filter((reaction) => reaction.reaction == ConfirmRections.CONFIRM).length == 2){
-                                console.log("push message to Database")
-                                
+                    const nonReactionPlayer = this.getNonReactionPlayer(user.id, unConfirmedMatch)!
+                    const checkableMatchResult = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
+                    let matchConfirmed = false;
+                    if(checkableMatchResult){
+                        if(checkableMatchResult.confirmReactions.filter((reaction)=> reaction.agreed == false).length >= 1){
+                            reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user}`)
+                            matchConfirmed = true;
+                        }
+                        if (checkableMatchResult.confirmReactions.length >= 2){
+                            if(checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length == 2){
                                 reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
-                                this.client.unConfirmedMatches.delete(reaction.message.id)
+                                matchConfirmed = true
                             }
                         }
-                    this.client.unConfirmedMatches.set(reaction.message.id, unConfrimedMatch);
+                        if(matchConfirmed){
+                            this.cleanDatabase(messageId);
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private isAgreed(emoji: string){
+        if(emoji === ConfirmRections.DENY){
+            return false
+        }
+        if(emoji === ConfirmRections.CONFIRM){
+            return true
+        }
+    } 
+
+    private getNonReactionPlayer(reactionUserId : string, unConfrimedMatch: IMatchResult){
+        if(reactionUserId === unConfrimedMatch.authorId){
+            return unConfrimedMatch.opponentId
+        }else if(reactionUserId !== unConfrimedMatch.authorId){
+            return unConfrimedMatch.authorId
+        }
+    }
+    
+    private async cleanDatabase(messageId: string){
+        await ConfirmReactionEntry.deleteMany({matchResultId: messageId})
+        await UnConfirmedMatches.deleteOne({matchResultId: messageId})
     }
 }

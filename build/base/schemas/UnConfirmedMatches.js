@@ -10,6 +10,7 @@ export default model("UnConfirmedMatches", new Schema({
     confirmReactions: [
         { type: Schema.Types.ObjectId, ref: "ConfirmReactionEntry" },
     ],
+    matchDay: { type: Number, required: true }
 }, {
     timestamps: true,
 }));

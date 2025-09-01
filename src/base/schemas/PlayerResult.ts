@@ -5,7 +5,7 @@ export default model<IPlayerResult>("PlayerResult", new Schema<IPlayerResult>({
     userId: { type: String, required: true },
     casualties: { type: Number, required: true },
     touchdonws: { type: Number, required: true },
-    divisionId: { type: String, required: true, unique: true}
+    divisionId: { type: String, required: true }
 },
 {
     timestamps: true

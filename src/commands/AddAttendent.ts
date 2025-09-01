@@ -1,4 +1,4 @@
-import {ApplicationCommandOptionType, ChatInputCommandInteraction, PermissionsBitField, TextInputStyle } from "discord.js";
+import {ApplicationCommandOptionType, ChatInputCommandInteraction, MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
@@ -73,13 +73,18 @@ export default class AddAttendend extends Command{
             tdDiff: 0,
             points: 0
         })
+        try{
     
-        await attendend.save()
+            await attendend.save()
 
-        //@ts-ignore cant get rid of this
-        division.divisionAttendents.push(attendend._id)
-        await division.save()
-        interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.username} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
+            //@ts-ignore cant get rid of this
+            division.divisionAttendents.push(attendend._id)
+            await division.save()
+            interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.username} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
+        }catch(error){
+            console.error(error);
+            interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+        }
     }
 }
 

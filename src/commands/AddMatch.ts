@@ -1,4 +1,4 @@
-import {ApplicationCommandOptionType, ChatInputCommandInteraction, PermissionsBitField, TextInputStyle } from "discord.js";
+import {ApplicationCommandOptionType, ChatInputCommandInteraction, MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
@@ -66,22 +66,26 @@ export default class AddAttendend extends Command{
             interaction.reply(`Die angegebene Division ${interaction.options.getString("division-name")!} existiert nicht`)
             return
         }
-        
-        const match = new Match({
-            divisonId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
-            playerOne: interaction.options.getUser("player1")?.id,
-            playerTwo: interaction.options.getUser("player2")?.id,
-            gamePlayedAndConfirmed: false,
-            playerResults: [],
-            matchDay: interaction.options.getNumber("matchday")
-        })
+        try{
+            const match = new Match({
+                divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
+                playerOne: interaction.options.getUser("player1")?.id,
+                playerTwo: interaction.options.getUser("player2")?.id,
+                gamePlayedAndConfirmed: false,
+                playerResults: [],
+                matchDay: interaction.options.getNumber("matchday")
+            })
 
-        await match.save();
+            await match.save();
 
-        //@ts-ignore cant get rid of this
-        division.matches.push(match._id)
-        await division.save()
-        interaction.reply(`Das Match ${interaction.options.getUser("player1")?.username} gegen ${interaction.options.getUser("player2")?.username} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
+            //@ts-ignore cant get rid of this
+            division.matches.push(match._id)
+            await division.save()
+            interaction.reply(`Das Match ${interaction.options.getUser("player1")?.username} gegen ${interaction.options.getUser("player2")?.username} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
+        }catch(error){
+            console.error(error);
+            interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+        }
     }
 }
 

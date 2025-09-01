@@ -8,5 +8,6 @@ export default interface IMatchResult {
     casFor: number;
     casAgainst: number;
     confirmReactions: IConfirmReaction[];
+    matchDay: number;
 }
 //# sourceMappingURL=IMatchResult.d.ts.map

@@ -3,6 +3,7 @@ import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
 import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
+import Match from "../base/schemas/Match.js";
 export default class RecordMatchResultModal extends Command {
     constructor(client) {
         super(client, {
@@ -18,7 +19,13 @@ export default class RecordMatchResultModal extends Command {
                     description: "Wähle deinen Gegner aus",
                     type: ApplicationCommandOptionType.User,
                     required: true
-                }
+                },
+                {
+                    name: "matchday",
+                    description: "Spieltag angeben",
+                    type: ApplicationCommandOptionType.Number,
+                    required: true
+                },
             ]
         });
     }
@@ -34,6 +41,23 @@ export default class RecordMatchResultModal extends Command {
         const thirdActionRow = new ActionRowBuilder().addComponents(casForInput);
         const fourthActionRow = new ActionRowBuilder().addComponents(casAgainstInput);
         modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow);
+        const match = await Match.findOne({
+            matchDay: interaction.options.getNumber("matchday"),
+            $or: [
+                {
+                    playerOne: interaction.user?.id,
+                    playerTwo: opponent.id,
+                },
+                {
+                    playerOne: opponent.id,
+                    playerTwo: interaction.user?.id,
+                },
+            ],
+        });
+        if (!match) {
+            interaction.reply(`Das angegebene Match zwischen ${interaction.user} und ${opponent} existiert nicht für den Spieltag ${interaction.options.getNumber("matchday")}`);
+            return;
+        }
         await interaction.showModal(modal);
         const filter = (interaction) => interaction.customId === `matchresult-${interaction.user?.id}`;
         // wait for modal submit 
@@ -75,7 +99,8 @@ export default class RecordMatchResultModal extends Command {
                             tdAgainst: parseInt(tdAgainstValue),
                             casFor: parseInt(casForValue),
                             casAgainst: parseInt(casAgainstValue),
-                            confirmReactions: []
+                            confirmReactions: [],
+                            matchDay: interaction.options.getNumber("matchday")
                         });
                 }
             });

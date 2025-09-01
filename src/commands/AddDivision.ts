@@ -1,4 +1,4 @@
-import {ApplicationCommandOptionType, ChatInputCommandInteraction, PermissionsBitField, TextInputStyle } from "discord.js";
+import {ApplicationCommandOptionType, ChatInputCommandInteraction, MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
@@ -52,13 +52,17 @@ export default class AddDivision extends Command{
             divisionAttendents: [],
             matches: [],
         });
+        try{
     
-        await division.save()
+            await division.save()
 
-        //@ts-ignore cant get rid of this
-        competition.divisions.push(division._id)
-        await competition.save()
-        interaction.reply(`Division ${divisionName} wurde in der Competition ${competitionName} angelegt`)
+            //@ts-ignore cant get rid of this
+            competition.divisions.push(division._id)
+            await competition.save()
+            interaction.reply(`Division ${divisionName} wurde in der Competition ${competitionName} angelegt`)
+        }catch(error){
+            console.error(error);
+            interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+        }
     }
 }
-

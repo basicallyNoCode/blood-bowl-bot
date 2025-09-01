@@ -3,6 +3,8 @@ import Event from "../../base/classes/Event.js";
 import ConfirmRections from "../../base/enums/ConfirmReactions.js";
 import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
+import Match from "../../base/schemas/Match.js";
+import PlayerResult from "../../base/schemas/PlayerResult.js";
 export default class ConfirmReactionAdded extends Event {
     constructor(client) {
         super(client, {
@@ -58,7 +60,50 @@ export default class ConfirmReactionAdded extends Event {
                             matchConfirmed = true;
                         }
                         if (checkableMatchResult.confirmReactions.length >= 2) {
-                            if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length == 2) {
+                            if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length <= 2) {
+                                let playerTwo = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.id;
+                                if (!playerTwo) {
+                                    await reaction.message.guild?.members.fetch(nonReactionPlayer)?.then((guildMember) => {
+                                        playerTwo = guildMember.user.id;
+                                        console.log(playerTwo);
+                                    });
+                                }
+                                const match = await Match.findOne({
+                                    matchDay: checkableMatchResult.matchDay,
+                                    $or: [
+                                        {
+                                            playerOne: user?.id,
+                                            playerTwo: nonReactionPlayer,
+                                        },
+                                        {
+                                            playerOne: nonReactionPlayer,
+                                            playerTwo: user?.id,
+                                        },
+                                    ],
+                                });
+                                console.log(match);
+                                if (!match) {
+                                    reaction.message.reply(`Das angegebene Match existiert nicht`);
+                                    return;
+                                }
+                                const playerResultPlayer1 = new PlayerResult({
+                                    userId: checkableMatchResult.authorId,
+                                    touchdonws: checkableMatchResult.tdFor,
+                                    casualties: checkableMatchResult.casFor,
+                                    divisionId: match.divisionId,
+                                });
+                                const playerResultPlayer2 = new PlayerResult({
+                                    userId: checkableMatchResult.authorId,
+                                    touchdonws: checkableMatchResult.tdFor,
+                                    casualties: checkableMatchResult.casFor,
+                                    divisionId: match.divisionId,
+                                });
+                                await playerResultPlayer1.save();
+                                await playerResultPlayer2.save();
+                                //@ts-ignore
+                                match.playerResults.push(playerResultPlayer1._id, playerResultPlayer2._id);
+                                match.gamePlayedAndConfirmed = true,
+                                    match.save();
                                 reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`);
                                 matchConfirmed = true;
                             }

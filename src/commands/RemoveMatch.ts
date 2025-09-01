@@ -1,4 +1,4 @@
-import {ApplicationCommandOptionType, ChatInputCommandInteraction, CommandInteractionOptionResolver, PermissionsBitField, TextInputStyle } from "discord.js";
+import {ApplicationCommandOptionType, ChatInputCommandInteraction, CommandInteractionOptionResolver, MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
@@ -85,16 +85,20 @@ export default class RemoveDivision extends Command{
             //@ts-ignore cant get rid
             return m._id.toString() !== match[0]._id.toString();
         })
-
-        await division.save()
-        await Match.deleteMany(
-            {
-                divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
-                playerOne: interaction.options.getUser("player1")?.id,
-                playerTwo: interaction.options.getUser("player2")?.id,
-                matchDay: interaction.options.getNumber("matchday"),
-            });
-        interaction.reply("Match erfolgreich entfernt");
+        try{
+            await division.save()
+            await Match.deleteMany(
+                {
+                    divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
+                    playerOne: interaction.options.getUser("player1")?.id,
+                    playerTwo: interaction.options.getUser("player2")?.id,
+                    matchDay: interaction.options.getNumber("matchday"),
+                });
+            interaction.reply("Match erfolgreich entfernt");
+        }catch(error){
+            console.error(error);
+            interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+        }
     }
 }
 

@@ -60,13 +60,12 @@ export default class RemoveDivision extends Command {
             return;
         }
         const match = await Match.find({
-            divisonId: division.divisionId,
+            divisionId: division.divisionId,
             playerOne: interaction.options.getUser("player1")?.id,
             playerTwo: interaction.options.getUser("player2")?.id,
             matchDay: interaction.options.getNumber("matchday"),
             gamePlayedAndConfirmed: false,
         });
-        console.log(match);
         if (match.length === 0) {
             interaction.reply(`Das angegebene Match in der division  ${interaction.options.getString("division-name")} existiert entweder nicht oder ist bereits confirmed und kann nicht mehr gelöscht werden.`);
             return;
@@ -77,7 +76,7 @@ export default class RemoveDivision extends Command {
         });
         await division.save();
         await Match.deleteMany({
-            divisonId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
+            divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
             playerOne: interaction.options.getUser("player1")?.id,
             playerTwo: interaction.options.getUser("player2")?.id,
             matchDay: interaction.options.getNumber("matchday"),

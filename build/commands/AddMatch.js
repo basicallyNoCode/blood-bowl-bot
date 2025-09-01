@@ -61,12 +61,11 @@ export default class AddAttendend extends Command {
             return;
         }
         const match = new Match({
-            divisonId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
+            divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
             playerOne: interaction.options.getUser("player1")?.id,
             playerTwo: interaction.options.getUser("player2")?.id,
             gamePlayedAndConfirmed: false,
             playerResults: [],
-            winner: "",
             matchDay: interaction.options.getNumber("matchday")
         });
         await match.save();

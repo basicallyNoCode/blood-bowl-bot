@@ -5,7 +5,7 @@ import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
 import { IChoice } from "../base/interfaces/IChoice.js";
 
-export default class AddAttendend extends Command{
+export default class Standings extends Command{
     constructor(client: CustomClient){
         super(client, {
             name:"standings",
@@ -19,8 +19,7 @@ export default class AddAttendend extends Command{
                     name: "competition",
                     description: "Name der Competition",
                     type: ApplicationCommandOptionType.String,
-                    required: true,
-                    autocomplete: true
+                    required: true
                     
                 },
             ]

@@ -15,18 +15,17 @@ export default class Ready extends Event{
     async execute(){
         console.log(`${this.client.user?.tag} is now ready `)
         dotenv.config();
-
         const commands: object[] = this.getJson(this.client.commands)
         const rest = new REST().setToken(process.env.TOKEN!);
-        await rest.put(Routes.applicationCommands(this.client.config.discordClientId), 
-        {
-            body: []
-        })
+        try{
         const setCommands:any = await rest.put(Routes.applicationCommands(this.client.config.discordClientId), 
         {
             body: commands
         })
         console.log(`successfully set ${setCommands.length} commands!`)
+        }catch(error){
+            console.error(error)
+        }
     }
 
     private getJson(commands: Collection<string, Command>): object[]{

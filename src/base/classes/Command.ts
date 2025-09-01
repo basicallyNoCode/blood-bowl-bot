@@ -29,6 +29,7 @@ export default class Command implements ICommand{
     execute(interaction: ChatInputCommandInteraction): void {
     
     }
+    
     autocomplete(interaction: AutocompleteInteraction): void {
     
     }

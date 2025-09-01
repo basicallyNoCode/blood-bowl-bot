@@ -14,6 +14,9 @@ export default class Ready extends Event {
         dotenv.config();
         const commands = this.getJson(this.client.commands);
         const rest = new REST().setToken(process.env.TOKEN);
+        await rest.put(Routes.applicationCommands(this.client.config.discordClientId), {
+            body: []
+        });
         const setCommands = await rest.put(Routes.applicationCommands(this.client.config.discordClientId), {
             body: commands
         });

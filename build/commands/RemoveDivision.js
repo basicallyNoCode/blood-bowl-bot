@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionsBitField } from "discord.js";
+import { ApplicationCommandOptionType, MessageFlags, PermissionsBitField } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
@@ -29,10 +29,11 @@ export default class RemoveDivision extends Command {
         });
     }
     async execute(interaction) {
-        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${interaction.options.getString("competition")}` })
-            .populate('divisions');
+        const competitionName = `${interaction.guildId}-${interaction.options.getString("competition")}`;
+        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${competitionName}`, active: true }).populate('divisions');
+        ;
         if (!competition) {
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")} existiert nicht`);
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`);
             return;
         }
         const division = await Division.findOne({ divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}` });
@@ -44,9 +45,15 @@ export default class RemoveDivision extends Command {
             //@ts-ignore cant get rid
             return d._id.toString() !== division._id.toString();
         });
-        await competition.save();
-        await Division.deleteOne({ divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}` });
-        interaction.reply("Division erfolgreich entfernt");
+        try {
+            await competition.save();
+            await Division.deleteOne({ divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}` });
+            interaction.reply("Division erfolgreich entfernt");
+        }
+        catch (error) {
+            console.error(error);
+            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+        }
     }
 }
 //# sourceMappingURL=RemoveDivision.js.map

@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionsBitField, TextInputStyle } from "discord.js";
+import { ApplicationCommandOptionType, MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
@@ -68,7 +68,7 @@ export default class RecordMatchResultModal extends Command {
             const casAgainstValue = modalInteraction.fields.getTextInputValue("casAgainst");
             const tdForValue = modalInteraction.fields.getTextInputValue("tdForInput");
             const tdAgainstValue = modalInteraction.fields.getTextInputValue("tdAgainstInput");
-            const winner = this.determineWinner(interaction.user.username, opponent?.username, tdForValue, tdAgainstValue);
+            const winner = this.determineWinner(interaction.user.displayName, opponent?.displayName, tdForValue, tdAgainstValue);
             let resultString = "";
             if (winner === "unenteschieden") {
                 resultString = `wurde mit einem Unentschieden angegeben`;
@@ -85,23 +85,29 @@ export default class RecordMatchResultModal extends Command {
                 return;
             }
             const casString = `Außerdem wurden ${casForValue} von ${interaction.user} zugefügte Casualties und ${casAgainstValue} von ${opponent} zugefügte Casualties angegeben`;
-            modalInteraction.reply({ content: `Dein eingegebenes Spielergebnis für die begegnung ${interaction.user} gegen ${opponent}, ${resultString} mit einem Ergebnis von ${interaction.user}: ${tdForValue} und ${opponent}: ${tdAgainstValue}. \n${casString}. \nBitte Angaben bestätigen ${opponent}`, withResponse: true })
+            modalInteraction.reply({ content: `Dein eingegebenes Spielergebnis für die begegnung ${interaction.user} gegen ${opponent}, ${resultString} mit einem Ergebnis von ${interaction.user}: ${tdForValue} und ${opponent}: ${tdAgainstValue}. \n${casString}. \nBitte Angaben mit reaktion bestätigen ${opponent} & ${interaction.user}`, withResponse: true })
                 .then(async (messageToBeConfirmed) => {
                 if (messageToBeConfirmed.resource?.message) {
                     await messageToBeConfirmed.resource?.message.react('👍');
                     await messageToBeConfirmed.resource?.message.react('❌');
                     if (!await UnConfirmedMatches.exists({ matchResultId: messageToBeConfirmed.resource.message.id }))
-                        await UnConfirmedMatches.create({
-                            matchResultId: messageToBeConfirmed.resource.message.id,
-                            authorId: interaction.user.id,
-                            opponentId: opponent.id,
-                            tdFor: parseInt(tdForValue),
-                            tdAgainst: parseInt(tdAgainstValue),
-                            casFor: parseInt(casForValue),
-                            casAgainst: parseInt(casAgainstValue),
-                            confirmReactions: [],
-                            matchDay: interaction.options.getNumber("matchday")
-                        });
+                        try {
+                            await UnConfirmedMatches.create({
+                                matchResultId: messageToBeConfirmed.resource.message.id,
+                                authorId: interaction.user.id,
+                                opponentId: opponent.id,
+                                tdFor: parseInt(tdForValue),
+                                tdAgainst: parseInt(tdAgainstValue),
+                                casFor: parseInt(casForValue),
+                                casAgainst: parseInt(casAgainstValue),
+                                confirmReactions: [],
+                                matchDay: interaction.options.getNumber("matchday")
+                            });
+                        }
+                        catch (error) {
+                            console.error(error);
+                            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+                        }
                 }
             });
         }).catch((error) => console.error(error));

@@ -1,1 +1,0 @@
-{"version":3,"file":"Test.One.d.ts","sourceRoot":"","sources":["../../src/commands/Test.One.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,2BAA2B,EAAE,MAAM,YAAY,CAAC;AACzD,OAAO,YAAY,MAAM,iCAAiC,CAAC;AAC3D,OAAO,UAAU,MAAM,+BAA+B,CAAC;AAEvD,MAAM,CAAC,OAAO,OAAO,OAAQ,SAAQ,UAAU;gBAC/B,MAAM,EAAE,YAAY;IAMhC,OAAO,CAAC,WAAW,EAAE,2BAA2B;CAGnD"}

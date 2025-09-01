@@ -4,6 +4,5 @@ export default interface IDivisionAttendent {
     shownName: string,
     points: number,
     tdDiff: number,
-    casDiff:number,
-    
+    casDiff:number,  
 }

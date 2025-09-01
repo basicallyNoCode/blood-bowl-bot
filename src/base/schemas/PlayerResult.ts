@@ -7,6 +7,4 @@ export default model<IPlayerResult>("PlayerResult", new Schema<IPlayerResult>({
     touchdonws: { type: Number, required: true },
     divisionId: { type: String, required: true }
 },
-{
-    timestamps: true
-}))
+))

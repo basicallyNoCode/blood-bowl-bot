@@ -11,6 +11,4 @@ export default model<IConfirmReactionEntry>("ConfirmReactionEntry", new Schema<I
     authorId: { type: String, required: true },
     agreed: { type: Boolean, required: true },
 },
-{
-    timestamps: true
-}))
+))

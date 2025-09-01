@@ -10,6 +10,4 @@ export default model<IDivisionAttendent>("DivisionAttendend", new Schema<IDivisi
     points: { type: Number }
 
 },
-{
-    timestamps: true
-}))
+))

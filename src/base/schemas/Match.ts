@@ -9,6 +9,4 @@ export default model<IMatch>("Match", new Schema<IMatch>({
     playerResults: [{type: Schema.Types.ObjectId, ref: "PlayerResult"}],
     matchDay: {type: Number, required:true}
 },
-{
-    timestamps: true
-}))
+))

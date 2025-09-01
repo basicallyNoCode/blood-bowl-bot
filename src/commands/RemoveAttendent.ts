@@ -40,10 +40,11 @@ export default class RemoveDivision extends Command{
     }
 
     async execute(interaction: ChatInputCommandInteraction){
-        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${interaction.options.getString("competition")!}`})
-            .populate('divisions');
+        const competitionName= `${interaction.guildId}-${interaction.options.getString("competition")!}`
+        
+        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`, active: true}).populate('divisions');;
         if(!competition){
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")!} existiert nicht`)
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
         const division = await Division.findOne({divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`})
@@ -52,20 +53,20 @@ export default class RemoveDivision extends Command{
             return
         }
 
-        const attendend = await DivisionAttendent.find(
+        const attendend = await DivisionAttendent.findOne(
             {
                 divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
                 userId: interaction.options.getUser("user")?.id,
             });
 
-        if(attendend.length === 0){
+        if(!attendend){
             interaction.reply(`Die angegebene Division ${interaction.options.getString("division-name")!} existiert nicht`)
             return
         }
 
         division.divisionAttendents = division.divisionAttendents.filter((dA: any)=>{
             //@ts-ignore cant get rid
-            return dA._id.toString() !== attendend[0]._id.toString();
+            return dA._id.toString() !== attendend._id.toString();
         })
     
         try{

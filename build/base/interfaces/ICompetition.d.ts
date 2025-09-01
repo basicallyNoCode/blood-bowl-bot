@@ -7,5 +7,6 @@ export default interface ICompetition {
     drawPoints: number;
     lossPoints: number;
     divisions: IDivision[];
+    competitionName: string;
 }
 //# sourceMappingURL=ICompetition.d.ts.map

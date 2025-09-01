@@ -8,6 +8,4 @@ export default model<IDivision>("Division", new Schema<IDivision>({
     matches: [{type: Schema.Types.ObjectId, ref: "Match"}]
 
 },
-{
-    timestamps: true
-}))
+))

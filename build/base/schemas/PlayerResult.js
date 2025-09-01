@@ -4,7 +4,5 @@ export default model("PlayerResult", new Schema({
     casualties: { type: Number, required: true },
     touchdonws: { type: Number, required: true },
     divisionId: { type: String, required: true }
-}, {
-    timestamps: true
 }));
 //# sourceMappingURL=PlayerResult.js.map

@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import IMatchResult from "../../base/interfaces/IMatchResult.js";
 import Match from "../../base/schemas/Match.js";
 import PlayerResult from "../../base/schemas/PlayerResult.js";
+import DivisionAttendent from "../../base/schemas/DivisionAttendent.js";
+import Division from "../../base/schemas/Division.js";
 
 export default class ConfirmReactionAdded extends Event{
 
@@ -82,7 +84,6 @@ export default class ConfirmReactionAdded extends Event{
                                         },
                                     ],
                                 })
-                                console.log(match);
                                 if(!match){
                                     reaction.message.reply(`Das angegebene Match existiert nicht`)
                                     return
@@ -100,6 +101,13 @@ export default class ConfirmReactionAdded extends Event{
                                     touchdonws: checkableMatchResult.tdAgainst,
                                     casualties: checkableMatchResult.casAgainst,
                                     divisionId: match.divisionId,
+                                })
+
+                                const division = await Division.findOne({divisionId: match.divisionId}).populate("divisionAttendents");
+        
+                                const recordingAttendent = await DivisionAttendent.findOne({
+                                    divisionId: match.divisionId,
+
                                 })
 
                                 await playerResultsRecordingPlayer.save();

@@ -6,7 +6,5 @@ export default model("Match", new Schema({
     gamePlayedAndConfirmed: { type: Boolean, required: true },
     playerResults: [{ type: Schema.Types.ObjectId, ref: "PlayerResult" }],
     matchDay: { type: Number, required: true }
-}, {
-    timestamps: true
 }));
 //# sourceMappingURL=Match.js.map

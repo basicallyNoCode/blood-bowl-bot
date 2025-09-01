@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, Collection, Events } from "discord.js";
+import { ChatInputCommandInteraction, Collection, Events, Interaction } from "discord.js";
 import CustomClient from "../../base/classes/CustomClient.js";
 import Event from "../../base/classes/Event.js";
 import Command from "../../base/classes/Command.js";
@@ -14,7 +14,8 @@ export default class CommandHandler extends Event{
         })
     }
 
-    execute(interaction: ChatInputCommandInteraction): void {
+    execute(interaction: Interaction): void {
+        console.log("test");
         if(!interaction.isChatInputCommand()){
             return
         }

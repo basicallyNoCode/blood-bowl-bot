@@ -33,10 +33,11 @@ export default class RemoveDivision extends Command{
     }
 
     async execute(interaction: ChatInputCommandInteraction){
-        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${interaction.options.getString("competition")!}`})
-            .populate('divisions');
+        const competitionName= `${interaction.guildId}-${interaction.options.getString("competition")!}`
+        
+        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`, active: true}).populate('divisions');;
         if(!competition){
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")!} existiert nicht`)
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
         const division = await Division.findOne({divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`})

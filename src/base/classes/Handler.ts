@@ -30,6 +30,7 @@ export default class Handler implements IHandler{
                     console.log(`${file.split("/").pop()} does not have a name.`)
                     return;
                 }
+                console.log(event.name, " event added")
                 const execute = (...args: any) => event.execute(...args);
                 if(event.once){
                     //@ts-ignore no  way to get rid of this

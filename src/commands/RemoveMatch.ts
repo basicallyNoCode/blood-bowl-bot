@@ -54,9 +54,11 @@ export default class RemoveDivision extends Command{
     }
 
     async execute(interaction: ChatInputCommandInteraction){
-        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${interaction.options.getString("competition")!}`})
+        const competitionName= `${interaction.guildId}-${interaction.options.getString("competition")!}`
+        
+        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`, active: true}).populate('divisions');;
         if(!competition){
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")!} existiert nicht`)
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
         const division = await Division.findOne({divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`})
@@ -66,7 +68,7 @@ export default class RemoveDivision extends Command{
             return
         }
 
-        const match = await Match.find(
+        const match = await Match.findOne(
             {
                 divisionId: division.divisionId,
                 playerOne: interaction.options.getUser("player1")?.id,
@@ -75,7 +77,7 @@ export default class RemoveDivision extends Command{
                 gamePlayedAndConfirmed: false,
             });
 
-        if(match.length === 0){
+        if(!match){
             interaction.reply(`Das angegebene Match in der division  ${interaction.options.getString("division-name")!} existiert entweder nicht oder ist bereits confirmed und kann nicht mehr gelöscht werden.`)
             return
         }
@@ -83,7 +85,7 @@ export default class RemoveDivision extends Command{
 
         division.matches = division.matches.filter((m: any)=>{
             //@ts-ignore cant get rid
-            return m._id.toString() !== match[0]._id.toString();
+            return m._id.toString() !== match._id.toString();
         })
         try{
             await division.save()

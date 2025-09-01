@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionsBitField } from "discord.js";
+import { ApplicationCommandOptionType, MessageFlags, PermissionsBitField } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
@@ -31,9 +31,9 @@ export default class AddDivision extends Command {
     async execute(interaction) {
         const divisionName = interaction.options.getString("division-name");
         const competitionName = interaction.options.getString("competition");
-        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${competitionName}` });
+        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${competitionName}`, active: true });
         if (!competition) {
-            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht`);
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`);
             return;
         }
         const checkDivisionExists = await Division.findOne({ divisionId: `${competition.competitionId}-${divisionName}` });
@@ -47,11 +47,17 @@ export default class AddDivision extends Command {
             divisionAttendents: [],
             matches: [],
         });
-        await division.save();
-        //@ts-ignore cant get rid of this
-        competition.divisions.push(division._id);
-        await competition.save();
-        interaction.reply(`Division ${divisionName} wurde in der Competition ${competitionName} angelegt`);
+        try {
+            await division.save();
+            //@ts-ignore cant get rid of this
+            competition.divisions.push(division._id);
+            await competition.save();
+            interaction.reply(`Division ${divisionName} wurde in der Competition ${competitionName} angelegt`);
+        }
+        catch (error) {
+            console.error(error);
+            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+        }
     }
 }
 //# sourceMappingURL=AddDivision.js.map

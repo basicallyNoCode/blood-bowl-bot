@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionsBitField } from "discord.js";
+import { ApplicationCommandOptionType, MessageFlags, PermissionsBitField } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
@@ -36,10 +36,11 @@ export default class RemoveDivision extends Command {
         });
     }
     async execute(interaction) {
-        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${interaction.options.getString("competition")}` })
-            .populate('divisions');
+        const competitionName = `${interaction.guildId}-${interaction.options.getString("competition")}`;
+        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${competitionName}`, active: true }).populate('divisions');
+        ;
         if (!competition) {
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")} existiert nicht`);
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`);
             return;
         }
         const division = await Division.findOne({ divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}` });
@@ -47,24 +48,30 @@ export default class RemoveDivision extends Command {
             interaction.reply(`Die angegebene Division ${interaction.options.getString("division-name")} existiert nicht`);
             return;
         }
-        const attendend = await DivisionAttendent.find({
+        const attendend = await DivisionAttendent.findOne({
             divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
             userId: interaction.options.getUser("user")?.id,
         });
-        if (attendend.length === 0) {
+        if (!attendend) {
             interaction.reply(`Die angegebene Division ${interaction.options.getString("division-name")} existiert nicht`);
             return;
         }
         division.divisionAttendents = division.divisionAttendents.filter((dA) => {
             //@ts-ignore cant get rid
-            return dA._id.toString() !== attendend[0]._id.toString();
+            return dA._id.toString() !== attendend._id.toString();
         });
-        await division.save();
-        await DivisionAttendent.deleteMany({
-            divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
-            userId: interaction.options.getUser("user")?.id,
-        });
-        interaction.reply("Spieler erfolgreich entfernt");
+        try {
+            await division.save();
+            await DivisionAttendent.deleteMany({
+                divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
+                userId: interaction.options.getUser("user")?.id,
+            });
+            interaction.reply("Spieler erfolgreich entfernt");
+        }
+        catch (error) {
+            console.error(error);
+            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+        }
     }
 }
 //# sourceMappingURL=RemoveAttendent.js.map

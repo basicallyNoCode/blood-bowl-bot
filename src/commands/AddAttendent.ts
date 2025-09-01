@@ -48,9 +48,9 @@ export default class AddAttendend extends Command{
     async execute(interaction: ChatInputCommandInteraction){
         const divisionName = interaction.options.getString("division-name");
         const competitionName= interaction.options.getString("competition")
-        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`})
+        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`, active: true});
         if(!competition){
-            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht`)
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
 
@@ -63,7 +63,7 @@ export default class AddAttendend extends Command{
         if(division.divisionAttendents.filter((divA) =>{
             return interaction.options.getUser("user")?.id === divA.userId;
         }).length > 0){
-            interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.username} ist bereits in der Division ${interaction.options.getString("division-name")!}`)
+            interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.displayName} ist bereits in der Division ${interaction.options.getString("division-name")!}`)
         }
         const attendend = new DivisionAttendent({
             divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
@@ -80,7 +80,7 @@ export default class AddAttendend extends Command{
             //@ts-ignore cant get rid of this
             division.divisionAttendents.push(attendend._id)
             await division.save()
-            interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.username} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
+            interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.displayName} wurde der Division ${divisionName} in der Competition ${competitionName} hinzugefügt`)
         }catch(error){
             console.error(error);
             interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})

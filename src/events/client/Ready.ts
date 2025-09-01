@@ -18,6 +18,10 @@ export default class Ready extends Event{
 
         const commands: object[] = this.getJson(this.client.commands)
         const rest = new REST().setToken(process.env.TOKEN!);
+        await rest.put(Routes.applicationCommands(this.client.config.discordClientId), 
+        {
+            body: []
+        })
         const setCommands:any = await rest.put(Routes.applicationCommands(this.client.config.discordClientId), 
         {
             body: commands

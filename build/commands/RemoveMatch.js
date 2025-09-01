@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, PermissionsBitField } from "discord.js";
+import { ApplicationCommandOptionType, MessageFlags, PermissionsBitField } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import Competition from "../base/schemas/Competition.js";
@@ -48,9 +48,11 @@ export default class RemoveDivision extends Command {
         });
     }
     async execute(interaction) {
-        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${interaction.options.getString("competition")}` });
+        const competitionName = `${interaction.guildId}-${interaction.options.getString("competition")}`;
+        const competition = await Competition.findOne({ competitionId: `${interaction.guildId}-${competitionName}`, active: true }).populate('divisions');
+        ;
         if (!competition) {
-            interaction.reply(`Die angegebene Competition ${interaction.options.getString("competition")} existiert nicht`);
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`);
             return;
         }
         const division = await Division.findOne({ divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}` })
@@ -59,29 +61,35 @@ export default class RemoveDivision extends Command {
             interaction.reply(`Die angegebene Division ${interaction.options.getString("division-name")} existiert nicht`);
             return;
         }
-        const match = await Match.find({
+        const match = await Match.findOne({
             divisionId: division.divisionId,
             playerOne: interaction.options.getUser("player1")?.id,
             playerTwo: interaction.options.getUser("player2")?.id,
             matchDay: interaction.options.getNumber("matchday"),
             gamePlayedAndConfirmed: false,
         });
-        if (match.length === 0) {
+        if (!match) {
             interaction.reply(`Das angegebene Match in der division  ${interaction.options.getString("division-name")} existiert entweder nicht oder ist bereits confirmed und kann nicht mehr gelöscht werden.`);
             return;
         }
         division.matches = division.matches.filter((m) => {
             //@ts-ignore cant get rid
-            return m._id.toString() !== match[0]._id.toString();
+            return m._id.toString() !== match._id.toString();
         });
-        await division.save();
-        await Match.deleteMany({
-            divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
-            playerOne: interaction.options.getUser("player1")?.id,
-            playerTwo: interaction.options.getUser("player2")?.id,
-            matchDay: interaction.options.getNumber("matchday"),
-        });
-        interaction.reply("Match erfolgreich entfernt");
+        try {
+            await division.save();
+            await Match.deleteMany({
+                divisionId: `${competition.competitionId}-${interaction.options.getString("division-name")}`,
+                playerOne: interaction.options.getUser("player1")?.id,
+                playerTwo: interaction.options.getUser("player2")?.id,
+                matchDay: interaction.options.getNumber("matchday"),
+            });
+            interaction.reply("Match erfolgreich entfernt");
+        }
+        catch (error) {
+            console.error(error);
+            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+        }
     }
 }
 //# sourceMappingURL=RemoveMatch.js.map

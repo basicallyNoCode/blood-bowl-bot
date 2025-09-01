@@ -7,7 +7,6 @@ export default model("Competition", new Schema({
     drawPoints: { type: Number, required: true },
     lossPoints: { type: Number },
     divisions: [{ type: Schema.Types.ObjectId, ref: "Division" }],
-}, {
-    timestamps: true
+    competitionName: { type: String, required: true },
 }));
 //# sourceMappingURL=Competition.js.map

@@ -73,6 +73,7 @@ export default class CreateCompetition extends Command{
                     drawPoints: parseInt(drawPointsValue),
                     lossPointsValue: parseInt(lossPointsValue) ? parseInt(lossPointsValue) : 0,
                     active: true,
+                    competitionName: nameValue
                 })
 
                 modalInteraction.reply(`Competition ${nameValue} wurde angelegt`);

@@ -7,5 +7,6 @@ export default interface ICompetition{
     winPoints: number,
     drawPoints: number,
     lossPoints: number,
-    divisions: IDivision[]
+    divisions: IDivision[],
+    competitionName: string
 }

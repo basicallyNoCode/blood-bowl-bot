@@ -1,1 +1,0 @@
-{"version":3,"file":"Test.Two.d.ts","sourceRoot":"","sources":["../../src/commands/Test.Two.ts"],"names":[],"mappings":"AAAA,OAAO,EAAC,2BAA2B,EAAC,MAAM,YAAY,CAAC;AACvD,OAAO,YAAY,MAAM,iCAAiC,CAAC;AAC3D,OAAO,UAAU,MAAM,+BAA+B,CAAC;AAEvD,MAAM,CAAC,OAAO,OAAO,OAAQ,SAAQ,UAAU;gBAC/B,MAAM,EAAE,YAAY;IAMhC,OAAO,CAAC,WAAW,EAAE,2BAA2B;CAGnD"}

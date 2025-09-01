@@ -1,4 +1,4 @@
-import { PermissionsBitField, TextInputStyle } from "discord.js";
+import { MessageFlags, PermissionsBitField, TextInputStyle } from "discord.js";
 import Command from "../base/classes/Command.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
@@ -52,10 +52,14 @@ export default class CreateCompetition extends Command {
                 winPoints: parseInt(winPointsValue),
                 drawPoints: parseInt(drawPointsValue),
                 lossPointsValue: parseInt(lossPointsValue) ? parseInt(lossPointsValue) : 0,
-                active: false,
+                active: true,
+                competitionName: nameValue
             });
             modalInteraction.reply(`Competition ${nameValue} wurde angelegt`);
-        }).catch((error) => console.error(error));
+        }).catch((error) => {
+            console.error(error);
+            interaction.reply({ content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral] });
+        });
     }
 }
 //# sourceMappingURL=CreateCompetitionModal.js.map

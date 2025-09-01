@@ -87,7 +87,7 @@ export default class RecordMatchResultModal extends Command{
                 const casAgainstValue = modalInteraction.fields.getTextInputValue("casAgainst")
                 const tdForValue = modalInteraction.fields.getTextInputValue("tdForInput")
                 const tdAgainstValue = modalInteraction.fields.getTextInputValue("tdAgainstInput")
-                const winner = this.determineWinner(interaction.user.username, opponent?.username!, tdForValue, tdAgainstValue);
+                const winner = this.determineWinner(interaction.user.displayName, opponent?.displayName!, tdForValue, tdAgainstValue);
                 let resultString: string = "";
                 if(winner === "unenteschieden"){
                  resultString = `wurde mit einem Unentschieden angegeben`

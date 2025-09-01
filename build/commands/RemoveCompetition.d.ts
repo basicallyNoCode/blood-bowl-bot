@@ -1,8 +1,8 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
-export default class CreateDivison extends Command {
+export default class AddAttendend extends Command {
     constructor(client: CustomClient);
     execute(interaction: ChatInputCommandInteraction): Promise<void>;
 }
-//# sourceMappingURL=CreateDivisionModal.d.ts.map
+//# sourceMappingURL=RemoveCompetition.d.ts.map

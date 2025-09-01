@@ -6,7 +6,5 @@ export default model("DivisionAttendend", new Schema({
     casDiff: { type: Number },
     tdDiff: { type: Number },
     points: { type: Number }
-}, {
-    timestamps: true
 }));
 //# sourceMappingURL=DivisionAttendent.js.map

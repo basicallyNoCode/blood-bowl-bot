@@ -35,9 +35,9 @@ export default class AddDivision extends Command{
     async execute(interaction: ChatInputCommandInteraction){
         const divisionName = interaction.options.getString("division-name");
         const competitionName= interaction.options.getString("competition")
-        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`})
+        const competition = await Competition.findOne({competitionId: `${interaction.guildId}-${competitionName!}`, active: true});
         if(!competition){
-            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht`)
+            interaction.reply(`Die angegebene Competition ${competitionName} existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
 

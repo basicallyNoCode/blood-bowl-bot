@@ -5,6 +5,8 @@ import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
 import Match from "../../base/schemas/Match.js";
 import PlayerResult from "../../base/schemas/PlayerResult.js";
+import DivisionAttendent from "../../base/schemas/DivisionAttendent.js";
+import Division from "../../base/schemas/Division.js";
 export default class ConfirmReactionAdded extends Event {
     constructor(client) {
         super(client, {
@@ -56,18 +58,17 @@ export default class ConfirmReactionAdded extends Event {
                     let matchConfirmed = false;
                     if (checkableMatchResult) {
                         if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == false).length >= 1) {
-                            reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user}`);
+                            let pingUser = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user;
+                            if (!pingUser) {
+                                await reaction.message.guild?.members.fetch(nonReactionPlayer).then((guildMember) => {
+                                    pingUser = guildMember.user;
+                                });
+                            }
+                            reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${pingUser}`);
                             matchConfirmed = true;
                         }
                         if (checkableMatchResult.confirmReactions.length >= 2) {
                             if (checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length <= 2) {
-                                let playerTwo = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.id;
-                                if (!playerTwo) {
-                                    await reaction.message.guild?.members.fetch(nonReactionPlayer)?.then((guildMember) => {
-                                        playerTwo = guildMember.user.id;
-                                        console.log(playerTwo);
-                                    });
-                                }
                                 const match = await Match.findOne({
                                     matchDay: checkableMatchResult.matchDay,
                                     $or: [
@@ -81,27 +82,30 @@ export default class ConfirmReactionAdded extends Event {
                                         },
                                     ],
                                 });
-                                console.log(match);
                                 if (!match) {
                                     reaction.message.reply(`Das angegebene Match existiert nicht`);
                                     return;
                                 }
-                                const playerResultPlayer1 = new PlayerResult({
+                                const playerResultsRecordingPlayer = new PlayerResult({
                                     userId: checkableMatchResult.authorId,
                                     touchdonws: checkableMatchResult.tdFor,
                                     casualties: checkableMatchResult.casFor,
                                     divisionId: match.divisionId,
                                 });
-                                const playerResultPlayer2 = new PlayerResult({
-                                    userId: checkableMatchResult.authorId,
-                                    touchdonws: checkableMatchResult.tdFor,
-                                    casualties: checkableMatchResult.casFor,
+                                const playerResultOpponent = new PlayerResult({
+                                    userId: checkableMatchResult.opponentId,
+                                    touchdonws: checkableMatchResult.tdAgainst,
+                                    casualties: checkableMatchResult.casAgainst,
                                     divisionId: match.divisionId,
                                 });
-                                await playerResultPlayer1.save();
-                                await playerResultPlayer2.save();
+                                const division = await Division.findOne({ divisionId: match.divisionId }).populate("divisionAttendents");
+                                const recordingAttendent = await DivisionAttendent.findOne({
+                                    divisionId: match.divisionId,
+                                });
+                                await playerResultsRecordingPlayer.save();
+                                await playerResultOpponent.save();
                                 //@ts-ignore
-                                match.playerResults.push(playerResultPlayer1._id, playerResultPlayer2._id);
+                                match.playerResults.push(playerResultsRecordingPlayer._id, playerResultOpponent._id);
                                 match.gamePlayedAndConfirmed = true,
                                     match.save();
                                 reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`);

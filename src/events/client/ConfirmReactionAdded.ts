@@ -10,6 +10,7 @@ import Match from "../../base/schemas/Match.js";
 import PlayerResult from "../../base/schemas/PlayerResult.js";
 import DivisionAttendent from "../../base/schemas/DivisionAttendent.js";
 import Division from "../../base/schemas/Division.js";
+import Competition from "../../base/schemas/Competition.js";
 
 export default class ConfirmReactionAdded extends Event{
 
@@ -104,11 +105,53 @@ export default class ConfirmReactionAdded extends Event{
                                 })
 
                                 const division = await Division.findOne({divisionId: match.divisionId}).populate("divisionAttendents");
+                                if(!division){
+                                    reaction.message.reply("Die Division des Matches existiert nicht")
+                                    return
+                                }
+
+
+                                const competition = await Competition.findOne({competitionId: division!.competitionId, active: true})
+                                if(!competition){
+                                    reaction.message.reply("Die Competition des Matches existiert nicht oder ist nicht mehr Aktiv")
+                                    return
+                                }
         
                                 const recordingAttendent = await DivisionAttendent.findOne({
                                     divisionId: match.divisionId,
-
+                                    userId: checkableMatchResult.authorId,
                                 })
+                                
+
+                                const opposingAttendent = await DivisionAttendent.findOne({
+                                    divisionId: match.divisionId,
+                                    userId: checkableMatchResult.opponentId,
+                                })
+
+                                if(!recordingAttendent || !opposingAttendent){
+                                    reaction.message.reply("Das Match ist nicht zwischen 2 Liga Mitgliedern ausgetragen worden")
+                                    return
+                                }
+
+                                recordingAttendent.tdDiff = recordingAttendent.tdDiff + (checkableMatchResult.tdFor - checkableMatchResult.tdAgainst);
+                                recordingAttendent.casDiff = recordingAttendent.casDiff + (checkableMatchResult.casFor - checkableMatchResult.casAgainst);
+
+                                opposingAttendent.tdDiff = opposingAttendent.tdDiff + (checkableMatchResult.tdAgainst - checkableMatchResult.tdFor);
+                                opposingAttendent.casDiff = opposingAttendent.casDiff + (checkableMatchResult.casAgainst - checkableMatchResult.casFor);
+
+                                if(playerResultsRecordingPlayer.touchdonws > playerResultOpponent.touchdonws){
+                                    recordingAttendent.points = recordingAttendent.points + competition.winPoints
+                                    opposingAttendent.points = opposingAttendent.points + competition.lossPoints
+                                }else if(playerResultsRecordingPlayer.touchdonws < playerResultOpponent.touchdonws){
+                                    recordingAttendent.points = recordingAttendent.points + competition.lossPoints
+                                    opposingAttendent.points = opposingAttendent.points + competition.winPoints
+                                }else if(playerResultsRecordingPlayer.touchdonws === playerResultOpponent.touchdonws){
+                                    recordingAttendent.points = recordingAttendent.points + competition.drawPoints
+                                    opposingAttendent.points = opposingAttendent.points + competition.drawPoints
+                                }
+                                  
+                                await recordingAttendent.save();
+                                await opposingAttendent.save();
 
                                 await playerResultsRecordingPlayer.save();
                                 await playerResultOpponent.save();

@@ -51,6 +51,7 @@ export default class AddDivision extends Command{
             guildId: interaction.guildId,
             divisionAttendents: [],
             matches: [],
+            competitionId: competition.competitionId
         });
         try{
     

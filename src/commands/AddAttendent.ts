@@ -64,6 +64,7 @@ export default class AddAttendend extends Command{
             return interaction.options.getUser("user")?.id === divA.userId;
         }).length > 0){
             interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.displayName} ist bereits in der Division ${interaction.options.getString("division-name")!}`)
+            return
         }
         const attendend = new DivisionAttendent({
             divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,

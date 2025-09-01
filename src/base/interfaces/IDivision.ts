@@ -6,4 +6,5 @@ export default interface IDivision{
     divisionId: string, // Competition id + division name
     divisionAttendents: IDivisionAttendent[],
     matches: IMatch[],
+    competitionId: string,
 }

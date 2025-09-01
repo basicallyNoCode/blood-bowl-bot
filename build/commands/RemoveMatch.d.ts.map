@@ -1,1 +1,0 @@
-{"version":3,"file":"RemoveMatch.d.ts","sourceRoot":"","sources":["../../src/commands/RemoveMatch.ts"],"names":[],"mappings":"AAAA,OAAO,EAA+B,2BAA2B,EAAuF,MAAM,YAAY,CAAC;AAC3K,OAAO,OAAO,MAAM,4BAA4B,CAAC;AACjD,OAAO,YAAY,MAAM,iCAAiC,CAAC;AAS3D,MAAM,CAAC,OAAO,OAAO,cAAe,SAAQ,OAAO;gBACnC,MAAM,EAAE,YAAY;IA2C1B,OAAO,CAAC,WAAW,EAAE,2BAA2B;CAiDzD"}

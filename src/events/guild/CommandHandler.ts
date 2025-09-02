@@ -18,7 +18,6 @@ export default class CommandHandler extends Event{
         if(interaction.isAutocomplete()){
             const command: Command = this.client.commands.get(interaction.commandName)!;
             if(command && command.autocomplete){
-                console.log("test", command)
                 command.autocomplete(interaction);
             }
         }else{

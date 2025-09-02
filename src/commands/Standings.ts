@@ -12,7 +12,7 @@ export default class Standings extends Command{
     constructor(client: CustomClient){
         super(client, {
             name:"standings",
-            description: "Spieler zur division hinzufügen ",
+            description: "Tabelle ausgeben ",
             category: Category.UTILITIES,
             default_member_permissions: PermissionsBitField.Flags.UseApplicationCommands,
             dm_permession: true,
@@ -22,8 +22,8 @@ export default class Standings extends Command{
                     name: "competition",
                     description: "Name der Competition",
                     type: ApplicationCommandOptionType.String,
-                    required: true
-                    
+                    required: true,
+                    autocomplete: true
                 },
             ]
         })
@@ -31,49 +31,82 @@ export default class Standings extends Command{
 
     async execute(interaction: ChatInputCommandInteraction){
         const competitionId = interaction.options.getString("competition");
-        const competition = await Competition.find({competitionId: competitionId})
+        const competition = await Competition.findOne({competitionId: competitionId})
         
         if(!competition){
             interaction.reply(`Die angegebene Competition existiert nicht oder ist nicht mehr Aktiv`)
             return
         }
         const divisions = await Division.find({competitionId: competitionId}).populate("divisionAttendents");
-        if(divisions.length >=0 ){
+        if(divisions.length ===0 ){
             interaction.reply(`Die angegebene Competition hat keine Divisionen`)
             return
         }
         const standings : Collection<string, IStanding[]> = new Collection();
-        const filteredDivisions = divisions.filter((div)=>{div.divisionAttendents.length >= 2 && div.matches.length >= 2})
+        const filteredDivisions = divisions.filter((div)=>{return div.divisionAttendents.length >= 2 && div.matches.length >= 2})
         filteredDivisions.forEach(async (fDiv)=>{
             const divStandings: IStanding[] = [];
-            const sortedAttendents = await DivisionAttendent.find({divisionId: fDiv.divisionId}).sort({points: -1, tdDiff: -1, casDiff: -1}).exec();
-            if(sortedAttendents){
-                sortedAttendents.forEach((sortedAttendend, index)=>{
+            const sortedAttendents = await DivisionAttendent.aggregate([
+                {
+                    $match: { divisionId: fDiv.divisionId }
+                },
+                {
+                    $addFields: {
+                    tdDiff: { $subtract: ["$tdFor", "$tdAgainst"] },
+                    casDiff: { $subtract: ["$casFor", "$casAgainst"] }
+                    }
+                },
+                {
+                    $sort: {
+                    points: -1,     // highest points first
+                    tdDiff: -1,     // then tdDiff
+                    casDiff: -1     // then casDiff
+                    }
+                }
+            ]);
+
+            let currentRank = 1;
+            if(sortedAttendents.length > 0){
+                sortedAttendents.forEach((attendent, index)=>{
+                    if(index >0){
+                        const prevAttendent = sortedAttendents[index - 1]
+                        const tiedRank = ( attendent.points === prevAttendent.points
+                        && (attendent.tdFor - attendent.tdAgainst) === (prevAttendent.tdFor - prevAttendent.tdAgainst)
+                        && (attendent.casFor - attendent.casAgainst) === (prevAttendent.casFor - prevAttendent.casAgainst)
+                        )
+
+                        if(!tiedRank){
+                            currentRank = index + 1
+                        }
+                    }
                     divStandings.push({
-                        playerName: sortedAttendend.shownName,
-                        rank: index + 1,
-                        points: sortedAttendend.points,
-                        tdDiff: sortedAttendend.tdFor - sortedAttendend.tdAgainst,
-                        casDiff: sortedAttendend.casFor - sortedAttendend.casAgainst
+                        playerName: attendent.shownName,
+                        rank: currentRank,
+                        points: attendent.points,
+                        tdDiff: attendent.tdFor - attendent.tdAgainst,
+                        casDiff: attendent.casFor - attendent.casAgainst
                     })
                 })
             }
             const divName = fDiv.divisionId.split("-").pop();
+            console.log(divStandings)
             if(divStandings.length > 0 && divName){
                 standings.set(divName, divStandings);
             }
         })
+        console.log(standings);
+        interaction.reply(`Hier die Aktuelle Tabelle `)
     }
     
     async autocomplete(interaction: AutocompleteInteraction) {
-        console.log("test")
+     
         const focusedOption = interaction.options.getFocused(true);
         if(focusedOption.name === "competition"){
             const competitions = await Competition.find({
                 guildId: interaction.guildId
             })
             const choices: IChoice[] =[];
-            console.log(competitions);
+            
             competitions.forEach((competition)=>{
                 choices.push({name: competition.competitionName, value: competition.competitionId})
             })

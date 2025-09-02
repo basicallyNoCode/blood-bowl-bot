@@ -5,9 +5,11 @@ export default model<IDivisionAttendent>("DivisionAttendend", new Schema<IDivisi
     divisionId: { type: String, required: true }, 
     userId: {type: String, required: true },
     shownName: {type: String, required: true},
-    casDiff: { type: Number },
-    tdDiff: { type: Number },
-    points: { type: Number }
+    tdFor: { type: Number, default:0 },
+    tdAgainst: { type: Number, default:0 },
+    casFor: { type: Number, default:0 },
+    casAgainst: { type: Number, default:0 },
+    points: { type: Number, default:0 }
 
 },
 ))

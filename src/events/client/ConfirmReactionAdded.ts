@@ -122,7 +122,6 @@ export default class ConfirmReactionAdded extends Event{
                                     userId: checkableMatchResult.authorId,
                                 })
                                 
-
                                 const opposingAttendent = await DivisionAttendent.findOne({
                                     divisionId: match.divisionId,
                                     userId: checkableMatchResult.opponentId,
@@ -133,35 +132,46 @@ export default class ConfirmReactionAdded extends Event{
                                     return
                                 }
 
-                                recordingAttendent.tdDiff = recordingAttendent.tdDiff + (checkableMatchResult.tdFor - checkableMatchResult.tdAgainst);
-                                recordingAttendent.casDiff = recordingAttendent.casDiff + (checkableMatchResult.casFor - checkableMatchResult.casAgainst);
+                                recordingAttendent.tdFor = (recordingAttendent.tdFor ?? 0) + (checkableMatchResult.tdFor ?? 0);
+                                recordingAttendent.casFor = (recordingAttendent.casFor ?? 0) + (checkableMatchResult.casFor ?? 0);
+                                recordingAttendent.tdAgainst = (recordingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
+                                recordingAttendent.casAgainst = (recordingAttendent.casAgainst ?? 0) + (checkableMatchResult.casAgainst ?? 0);
 
-                                opposingAttendent.tdDiff = opposingAttendent.tdDiff + (checkableMatchResult.tdAgainst - checkableMatchResult.tdFor);
-                                opposingAttendent.casDiff = opposingAttendent.casDiff + (checkableMatchResult.casAgainst - checkableMatchResult.casFor);
+                                opposingAttendent.tdFor = (opposingAttendent.tdFor ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
+                                opposingAttendent.casFor = (opposingAttendent.casFor ?? 0) + (checkableMatchResult.casAgainst ?? 0);
+                                opposingAttendent.tdAgainst = (opposingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdFor ?? 0);
+                                opposingAttendent.casAgainst = (opposingAttendent.casAgainst ?? 0) + (checkableMatchResult.casFor ?? 0);
+
+                                const winPoints = competition.winPoints ?? 0;
+                                const lossPoints = competition.lossPoints ?? 0;
+                                const drawPoints = competition.drawPoints ?? 0;
 
                                 if(playerResultsRecordingPlayer.touchdonws > playerResultOpponent.touchdonws){
-                                    recordingAttendent.points = recordingAttendent.points + competition.winPoints
-                                    opposingAttendent.points = opposingAttendent.points + competition.lossPoints
+                                    recordingAttendent.points = (recordingAttendent.points ?? 0) + winPoints
+                                    opposingAttendent.points = (opposingAttendent.points ?? 0) + lossPoints
                                 }else if(playerResultsRecordingPlayer.touchdonws < playerResultOpponent.touchdonws){
-                                    recordingAttendent.points = recordingAttendent.points + competition.lossPoints
-                                    opposingAttendent.points = opposingAttendent.points + competition.winPoints
+                                    recordingAttendent.points = (recordingAttendent.points ?? 0) + lossPoints
+                                    opposingAttendent.points = (opposingAttendent.points ?? 0) + winPoints
                                 }else if(playerResultsRecordingPlayer.touchdonws === playerResultOpponent.touchdonws){
-                                    recordingAttendent.points = recordingAttendent.points + competition.drawPoints
-                                    opposingAttendent.points = opposingAttendent.points + competition.drawPoints
+                                    recordingAttendent.points = (recordingAttendent.points ?? 0) + drawPoints
+                                    opposingAttendent.points = (opposingAttendent.points ?? 0) + drawPoints
                                 }
-                                  
+                                
                                 await recordingAttendent.save();
                                 await opposingAttendent.save();
 
                                 await playerResultsRecordingPlayer.save();
                                 await playerResultOpponent.save();
-            
                                 //@ts-ignore
                                 match.playerResults.push(playerResultsRecordingPlayer._id, playerResultOpponent._id)
                                 match.gamePlayedAndConfirmed = true,
                                 match.save();
 
-                                reaction.message.reply(`${user} und ${reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
+                                let nonReactionPlayerUser = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user
+                                if(!nonReactionPlayerUser){
+                                    nonReactionPlayerUser = (await reaction.message.guild?.members.fetch(nonReactionPlayer))!.user
+                                }
+                                reaction.message.reply(`${user} und ${nonReactionPlayerUser} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
                                 matchConfirmed = true
                             }   
                         }

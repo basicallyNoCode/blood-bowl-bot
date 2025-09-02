@@ -70,9 +70,6 @@ export default class AddAttendend extends Command{
             divisionId: `${competition.competitionId!}-${interaction.options.getString("division-name")}`,
             userId: interaction.options.getUser("user")?.id,
             shownName: interaction.options.getString("shown-name"),
-            casDiff: 0,
-            tdDiff: 0,
-            points: 0
         })
         try{
     

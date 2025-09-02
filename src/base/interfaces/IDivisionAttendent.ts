@@ -3,6 +3,8 @@ export default interface IDivisionAttendent {
     userId: string,
     shownName: string,
     points: number,
-    tdDiff: number,
-    casDiff:number,  
+    tdFor: number,
+    tdAgainst:number,
+    casFor: number,
+    casAgainst: number  
 }

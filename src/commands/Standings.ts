@@ -14,7 +14,7 @@ export default class Standings extends Command{
             name:"standings",
             description: "Spieler zur division hinzufügen ",
             category: Category.UTILITIES,
-            default_member_permissions: PermissionsBitField.Flags.Administrator,
+            default_member_permissions: PermissionsBitField.Flags.UseApplicationCommands,
             dm_permession: true,
             cooldown: 3,
             options: [
@@ -53,8 +53,8 @@ export default class Standings extends Command{
                         playerName: sortedAttendend.shownName,
                         rank: index + 1,
                         points: sortedAttendend.points,
-                        tdDiff: sortedAttendend.tdDiff,
-                        casDiff: sortedAttendend.casDiff
+                        tdDiff: sortedAttendend.tdFor - sortedAttendend.tdAgainst,
+                        casDiff: sortedAttendend.casFor - sortedAttendend.casAgainst
                     })
                 })
             }

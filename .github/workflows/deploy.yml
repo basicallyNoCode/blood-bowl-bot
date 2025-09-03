@@ -24,8 +24,12 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload build folder via SFTP
+        uses: devops-infra/action-sftp@v2
         with:
-          name: bot-dist
-          path: dist/
+          host: ${{ secrets.CYBRANCEE_HOST }}
+          username: ${{ secrets.CYBRANCEE_USERNAME }}
+          password: ${{ secrets.CYBRANCEE_PASSWORD }}
+          port: ${{ vars.CYBRANCEE_PORT }}
+          local_path: build/
+          remote_path: /home/container/

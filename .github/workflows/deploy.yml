@@ -31,5 +31,6 @@ jobs:
           username: ${{ secrets.CYBRANCEE_USERNAME }}
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
-          local_path: build/
-          remote_path: /home/container/
+          uploads: |
+            ./build => ./home/container/build
+            ./node_modules/ => ./home/container/node_modules

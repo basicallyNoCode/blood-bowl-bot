@@ -24,8 +24,8 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Upload build folder via SFTP
-        uses: devops-infra/action-sftp@v2
+      - name: SFTP Upload
+        uses: Dylan700/sftp-upload-action@v1.2.3
         with:
           host: ${{ secrets.CYBRANCEE_HOST }}
           username: ${{ secrets.CYBRANCEE_USERNAME }}

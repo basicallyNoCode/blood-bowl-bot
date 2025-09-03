@@ -47,7 +47,7 @@ export default class CommandHandler extends Event{
                         embeds: [
                             new EmbedBuilder()
                             .setColor(0x0099FF)
-                            .setDescription(`Dieses Command kann aktuell nicht benutzt werden bitte warte \`${cooldownRemaining}\` seconds`)
+                            .setDescription(`Dieses Command kann aktuell nicht benutzt werden bitte warte \`${cooldownRemaining}\` sekunden`)
                         ],
                         ephemeral: true,
                     }

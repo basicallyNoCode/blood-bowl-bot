@@ -27,7 +27,7 @@ jobs:
       - name: SFTP Upload
         uses: Dylan700/sftp-upload-action@v1.2.3
         with:
-          server: sftp://cybrancee-bot-eu-central-18.cybrancee.com
+          server: ${{ secrets.CYBRANCEE_HOST }}
           username: ${{ secrets.CYBRANCEE_USERNAME }}
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}

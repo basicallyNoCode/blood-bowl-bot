@@ -27,6 +27,8 @@ jobs:
 
       - name: SFTP Upload
         uses: Dylan700/sftp-upload-action@v1.2.3
+        timeout-minutes: 5
+        continue-on-error: true
         with:
           server: ${{ secrets.CYBRANCEE_HOST }}
           username: ${{ secrets.CYBRANCEE_USERNAME }}
@@ -35,7 +37,7 @@ jobs:
           uploads: |
             ./build => ./build
           delete: true
-          
+
   deploy:
     runs-on: ubuntu-latest
     needs: build

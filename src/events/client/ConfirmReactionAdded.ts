@@ -52,9 +52,7 @@ export default class ConfirmReactionAdded extends Event{
                 
                     const messageId = reaction.message.id;
                     const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
-                    console.log("test");
                     if(unConfirmedMatch){
-                        console.log("test2");
                         if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
                             if(reaction.emoji.name == ConfirmRections.CONFIRM || reaction.emoji.name == ConfirmRections.DENY){
                                 const confirmReaction = new ConfirmReactionEntry({

@@ -81,13 +81,13 @@ export default class AddAttendend extends Command{
                 //@ts-ignore cant get rid of this
                 division.divisionAttendents.push(attendend._id)
                 await division.save()
-                interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.displayName} wurde der Division ${divisionName} in der Competition ${competitionId} hinzugefügt`)
+                await interaction.reply(`Der Nutzer ${interaction.options.getUser("user")?.displayName} wurde der Division ${divisionName} in der Competition ${competitionId} hinzugefügt`)
             }catch(error){
                 console.error(error);
-                interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+                await interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
             }
         }catch(error){
-            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

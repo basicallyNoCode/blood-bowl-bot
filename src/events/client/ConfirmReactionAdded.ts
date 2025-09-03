@@ -1,10 +1,9 @@
-import { Collection, Events, Message, MessageManager, MessageReaction, ReactionManager, User } from "discord.js";
+import { Collection, Events, MessageReaction, User } from "discord.js";
 import CustomClient from "../../base/classes/CustomClient.js";
 import Event from "../../base/classes/Event.js";
 import ConfirmRections from "../../base/enums/ConfirmReactions.js";
 import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
-import mongoose from "mongoose";
 import IMatchResult from "../../base/interfaces/IMatchResult.js";
 import Match from "../../base/schemas/Match.js";
 import PlayerResult from "../../base/schemas/PlayerResult.js";
@@ -71,7 +70,7 @@ export default class ConfirmReactionAdded extends Event{
                                             pingUser = guildMember.user
                                         })
                                     }
-                                    reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${pingUser}`)
+                                    await reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${pingUser}`)
                                     matchConfirmed = true;
                                 }
                                 if (checkableMatchResult.confirmReactions.length >= 2){
@@ -91,7 +90,7 @@ export default class ConfirmReactionAdded extends Event{
                                             ],
                                         })
                                         if(!match){
-                                            reaction.message.reply(`Das angegebene Match existiert nicht`)
+                                            await reaction.message.reply(`Das angegebene Match existiert nicht`)
                                             return
                                         }
 
@@ -111,14 +110,14 @@ export default class ConfirmReactionAdded extends Event{
 
                                         const division = await Division.findOne({divisionId: match.divisionId}).populate("divisionAttendents");
                                         if(!division){
-                                            reaction.message.reply("Die Division des Matches existiert nicht")
+                                            await reaction.message.reply("Die Division des Matches existiert nicht")
                                             return
                                         }
 
 
                                         const competition = await Competition.findOne({competitionId: division!.competitionId, active: true})
                                         if(!competition){
-                                            reaction.message.reply("Die Competition des Matches existiert nicht oder ist nicht mehr Aktiv")
+                                            await reaction.message.reply("Die Competition des Matches existiert nicht oder ist nicht mehr Aktiv")
                                             return
                                         }
                 
@@ -133,7 +132,7 @@ export default class ConfirmReactionAdded extends Event{
                                         })
 
                                         if(!recordingAttendent || !opposingAttendent){
-                                            reaction.message.reply("Das Match ist nicht zwischen 2 Liga Mitgliedern ausgetragen worden")
+                                            await reaction.message.reply("Das Match ist nicht zwischen 2 Liga Mitgliedern ausgetragen worden")
                                             return
                                         }
 
@@ -182,7 +181,7 @@ export default class ConfirmReactionAdded extends Event{
                                         if(!nonReactionPlayerUser){
                                             nonReactionPlayerUser = (await reaction.message.guild?.members.fetch(nonReactionPlayer))!.user
                                         }
-                                        reaction.message.reply(`${user} und ${nonReactionPlayerUser} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
+                                        await reaction.message.reply(`${user} und ${nonReactionPlayerUser} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
                                         matchConfirmed = true
                                     }   
                                 }

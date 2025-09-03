@@ -4,7 +4,6 @@ import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
 import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
 import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
-import mongoose from "mongoose";
 import Match from "../base/schemas/Match.js";
 import { IChoice } from "../base/interfaces/IChoice.js";
 import Competition from "../base/schemas/Competition.js";
@@ -49,7 +48,7 @@ export default class RecordMatchResultModal extends Command{
             const competition = await Competition.findOne({competitionId: competitionId!, active: true});
             const matchDay = interaction.options.getNumber("matchday");
             if(!competition){
-                interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
+                await interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
                 return
             }
 
@@ -68,7 +67,7 @@ export default class RecordMatchResultModal extends Command{
                 ],
             })
             if(!match){
-                interaction.reply(`Das angegebene Match existiert nicht`)
+                await interaction.reply(`Das angegebene Match existiert nicht`)
                 return
             }
 
@@ -110,14 +109,14 @@ export default class RecordMatchResultModal extends Command{
                     if(winner === "unenteschieden"){
                     resultString = `wurde mit einem Unentschieden angegeben`
                     }else if(winner === null){
-                        modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Touchdowns in zahlen angegeben sind");
+                        await modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Touchdowns in zahlen angegeben sind");
                         return
                     }else{
                         resultString = `wurde als Sieg für ${winner} angegeben`
                     }
 
                     if(Number.isNaN(casAgainstValue) || Number.isNaN(casForValue)){
-                        modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Casualties in zahlen angegeben sind");
+                        await modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Casualties in zahlen angegeben sind");
                         return
                     }
 
@@ -150,7 +149,7 @@ export default class RecordMatchResultModal extends Command{
 
             }).catch((error)=> console.error(error)) 
         }catch(error){
-            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

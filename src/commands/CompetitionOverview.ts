@@ -30,11 +30,10 @@ export default class AddDivision extends Command{
 
     async execute(interaction: ChatInputCommandInteraction){
         try{
-            const divisionName = interaction.options.getString("division-name");
             const competitionId= interaction.options.getString("competition")
             const competition = await Competition.findOne({competitionId: competitionId!});
             if(!competition){
-                interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
+                await interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
                 return
             }
             const divisions = await Division.find({competitionId: competition.competitionId}).populate("divisionAttendents").populate("matches");
@@ -65,9 +64,9 @@ export default class AddDivision extends Command{
                 resultReply = resultReply + divString;
             }
             
-            interaction.reply(resultReply)
+            await interaction.reply(resultReply)
         }catch(error){
-            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

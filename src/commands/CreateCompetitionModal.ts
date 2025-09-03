@@ -77,14 +77,14 @@ export default class CreateCompetition extends Command{
                         competitionName: nameValue
                     })
 
-                    modalInteraction.reply(`Competition ${nameValue} wurde angelegt`);
+                    await modalInteraction.reply(`Competition ${nameValue} wurde angelegt`);
 
                 }).catch((error)=> {
                     console.error(error);
                     interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
                 }) 
         }catch(error){
-            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

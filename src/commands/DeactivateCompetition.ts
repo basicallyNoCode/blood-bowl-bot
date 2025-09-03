@@ -2,11 +2,7 @@ import {ApplicationCommandOptionType, AutocompleteInteraction, ChatInputCommandI
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
-import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/builders";
 import Competition from "../base/schemas/Competition.js";
-import Division from "../base/schemas/Division.js";
-import DivisionAttendent from "../base/schemas/DivisionAttendent.js";
-import Match from "../base/schemas/Match.js";
 import { IChoice } from "../base/interfaces/IChoice.js";
 
 export default class AddAttendend extends Command{
@@ -35,20 +31,20 @@ export default class AddAttendend extends Command{
             const competitionId= interaction.options.getString("competition")
             const competition = await Competition.findOne({competitionId: competitionId!, active: true});
             if(!competition){
-                interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
+                await interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
                 return
             }
             //@ts-ignore cant get rid of this
             try{
             competition.active = false;
             competition.save();
-            interaction.reply(`Die Competition ${competitionId!} wurde deaktiviert`)
+            await interaction.reply(`Die Competition ${competitionId!} wurde deaktiviert`)
             }catch(error){
                 console.error(error);
-                interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+                await interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
             }
         }catch(error){
-            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

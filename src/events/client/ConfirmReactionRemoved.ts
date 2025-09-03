@@ -6,6 +6,7 @@ import ConfirmReactionEntry from "../../base/schemas/ConfirmReactionEntry.js";
 import UnConfirmedMatches from "../../base/schemas/UnConfirmedMatches.js";
 import mongoose from "mongoose";
 import IMatchResult from "../../base/interfaces/IMatchResult.js";
+import { enqueueReaction } from "../../base/util/reactionQueue.js";
 
 export default class ConfirmReactionRemoved extends Event {
 
@@ -33,25 +34,41 @@ export default class ConfirmReactionRemoved extends Event {
                 return;
             }
         }
-        if(reaction.message.author!.id == this.client.user?.id!){
-            const messageId = reaction.message.id;
-            const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
-            if(unConfirmedMatch){
-                if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
-                    if(reaction.emoji.name == ConfirmRections.CONFIRM){
-                        unConfirmedMatch.confirmReactions = unConfirmedMatch.confirmReactions.filter((r) => {
-                            if(user.id == r.authorId){
-                                return !r.agreed;
 
-                            }else{
-                                return true
-                            }
-                        })
-                        await unConfirmedMatch.save()
-                        await ConfirmReactionEntry.deleteMany({matchResultId: messageId, authorId: user.id  })
-                    }      
-                }
-            }
+        if (reaction.message.author?.id !== this.client.user?.id) return;
+
+                
+        if(reaction.emoji.name != ConfirmRections.CONFIRM && reaction.emoji.name != ConfirmRections.DENY){
+            return
         }
+
+        await enqueueReaction(reaction.message.id, async () => {
+            try{
+                const messageId = reaction.message.id;
+                const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
+                if(unConfirmedMatch){
+                    if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
+                        if(reaction.emoji.name == ConfirmRections.CONFIRM){
+                            unConfirmedMatch.confirmReactions = unConfirmedMatch.confirmReactions.filter((r) => {
+                                if(user.id == r.authorId){
+                                    return !r.agreed;
+
+                                }else{
+                                    return true
+                                }
+                            })
+                            try{
+                                await unConfirmedMatch.save()
+                                await ConfirmReactionEntry.deleteMany({matchResultId: messageId, authorId: user.id  })
+                            } catch(error){
+                                console.error("error when removing confirmReaction or unConfirmed match", error);
+                            }
+                        }      
+                    }
+                }
+            }catch(error){
+                console.error("error when trying to handle Remove Reaction", error)
+            }
+        })
     }
 }

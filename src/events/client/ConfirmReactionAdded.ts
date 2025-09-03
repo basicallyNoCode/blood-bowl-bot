@@ -10,6 +10,7 @@ import PlayerResult from "../../base/schemas/PlayerResult.js";
 import DivisionAttendent from "../../base/schemas/DivisionAttendent.js";
 import Division from "../../base/schemas/Division.js";
 import Competition from "../../base/schemas/Competition.js";
+import { enqueueReaction } from "../../base/util/reactionQueue.js";
 
 export default class ConfirmReactionAdded extends Event{
     reactionQueues: Collection<string, Promise<void>>;
@@ -22,8 +23,7 @@ export default class ConfirmReactionAdded extends Event{
         })
         this.reactionQueues = new Collection();
     }
-    async execute(reaction: MessageReaction, user: User){
-        await this.enqueueReaction(reaction.message.id, async () => {
+    async execute(reaction: MessageReaction, user: User){ 
             try{
                 if(reaction.partial){
                     try {
@@ -41,10 +41,20 @@ export default class ConfirmReactionAdded extends Event{
                         return;
                     }
                 }
-                if(reaction.message.author!.id == this.client.user?.id!){
+                
+                if (reaction.message.author?.id !== this.client.user?.id) return;
+
+                
+                if(reaction.emoji.name != ConfirmRections.CONFIRM && reaction.emoji.name != ConfirmRections.DENY){
+                    return
+                }
+                await enqueueReaction(reaction.message.id, async () => {
+                
                     const messageId = reaction.message.id;
                     const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
+                    console.log("test");
                     if(unConfirmedMatch){
+                        console.log("test2");
                         if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
                             if(reaction.emoji.name == ConfirmRections.CONFIRM || reaction.emoji.name == ConfirmRections.DENY){
                                 const confirmReaction = new ConfirmReactionEntry({
@@ -52,10 +62,14 @@ export default class ConfirmReactionAdded extends Event{
                                     authorId: user.id,
                                     agreed: this.isAgreed(reaction.emoji.name)
                                 })
-                                await confirmReaction.save();
-                                //@ts-ignore cant get rid of this
-                                unConfirmedMatch.confirmReactions.push(confirmReaction._id);
-                                unConfirmedMatch.save();
+                                try{
+                                    await confirmReaction.save();
+                                    //@ts-ignore cant get rid of this
+                                    unConfirmedMatch.confirmReactions.push(confirmReaction._id);
+                                    await unConfirmedMatch.save();
+                                } catch(error){
+                                    console.error("error when saviing confirmReaction or unConfirmed match", error);
+                                }
                             }else{
                                 return
                             }
@@ -191,11 +205,11 @@ export default class ConfirmReactionAdded extends Event{
                             }
                         }
                     }
-                }
+                })
             }catch(error){
                 console.error(error);
             }
-        })
+        
     }
 
     private isAgreed(emoji: string){
@@ -222,17 +236,17 @@ export default class ConfirmReactionAdded extends Event{
 
     
 
-    private async enqueueReaction(messageId: string, task: () => Promise<void>) {
-        const prev = this.reactionQueues.get(messageId) ?? Promise.resolve();
+    // private async enqueueReaction(messageId: string, task: () => Promise<void>) {
+    //     const prev = this.reactionQueues.get(messageId) ?? Promise.resolve();
     
-        // Chain the new task after the previous one
-        const next = prev.then(task).catch((err) => {
-            console.error("Reaction queue error:", err);
-        });
+    //     // Chain the new task after the previous one
+    //     const next = prev.then(task).catch((err) => {
+    //         console.error("Reaction queue error:", err);
+    //     });
     
-        // Store the new promise back in the collection
-        this.reactionQueues.set(messageId, next);
+    //     // Store the new promise back in the collection
+    //     this.reactionQueues.set(messageId, next);
     
-        return next;
-    }
+    //     return next;
+    // }
 }

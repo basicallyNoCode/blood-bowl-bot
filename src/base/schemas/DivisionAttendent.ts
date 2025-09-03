@@ -9,7 +9,10 @@ export default model<IDivisionAttendent>("DivisionAttendend", new Schema<IDivisi
     tdAgainst: { type: Number, default:0 },
     casFor: { type: Number, default:0 },
     casAgainst: { type: Number, default:0 },
-    points: { type: Number, default:0 }
+    points: { type: Number, default:0 },
+    wins : {type: Number, required:true, default: 0},
+    draws : {type: Number, required:true, default: 0},
+    losses : {type: Number, required:true, default: 0},
 
 },
 ))

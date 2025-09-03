@@ -7,6 +7,7 @@ export default model<IMatch>("Match", new Schema<IMatch>({
     playerTwo: {type: String, required: true},
     gamePlayedAndConfirmed: {type: Boolean, required: true},
     playerResults: [{type: Schema.Types.ObjectId, ref: "PlayerResult"}],
-    matchDay: {type: Number, required:true}
+    matchDay: {type: Number, required:true, default: 0},
+    competitionId: {type: String, required: true},
 },
 ))

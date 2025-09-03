@@ -7,4 +7,5 @@ export default interface IMatch{
     gamePlayedAndConfirmed: boolean,
     playerResults: IPlayerResult[],
     matchDay: number,
+    competitionId: string
 }

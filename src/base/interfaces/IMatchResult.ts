@@ -10,4 +10,5 @@ export default interface IMatchResult{
     casAgainst: number,
     confirmReactions: IConfirmReaction[],
     matchDay: number,
+    competitionId: string
 }

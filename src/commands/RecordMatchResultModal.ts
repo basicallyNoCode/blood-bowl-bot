@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, ChatInputCommandInteraction, Collection, ComponentType, Events, Message, MessageFlags, PermissionsBitField, TextInputStyle, User } from "discord.js";
+import { ApplicationCommandOptionType, AutocompleteInteraction, ChatInputCommandInteraction, Collection, ComponentType, Events, Message, MessageFlags, PermissionsBitField, TextInputStyle, User } from "discord.js";
 import Command from "../base/classes/Command.js";
 import CustomClient from "../base/classes/CustomClient.js";
 import Category from "../base/enums/Category.js";
@@ -6,6 +6,8 @@ import { ActionRowBuilder, ModalBuilder, TextInputBuilder } from "@discordjs/bui
 import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
 import mongoose from "mongoose";
 import Match from "../base/schemas/Match.js";
+import { IChoice } from "../base/interfaces/IChoice.js";
+import Competition from "../base/schemas/Competition.js";
 
 export default class RecordMatchResultModal extends Command{
     constructor(client: CustomClient){
@@ -17,6 +19,13 @@ export default class RecordMatchResultModal extends Command{
             dm_permession: true,
             cooldown: 3,
             options: [
+                {
+                    name: "competition",
+                    description: "Competition des Spiels Auswählen",
+                    type: ApplicationCommandOptionType.String,
+                    required: true,
+                    autocomplete: true
+                },
                 {
                     name: "opponent",
                     description: "Wähle deinen Gegner aus",
@@ -34,105 +43,136 @@ export default class RecordMatchResultModal extends Command{
     }
 
     async execute(interaction: ChatInputCommandInteraction){
+        try{
+            const opponent= interaction.options.getUser("opponent")
+            const competitionId= interaction.options.getString("competition");
+            const competition = await Competition.findOne({competitionId: competitionId!, active: true});
+            const matchDay = interaction.options.getNumber("matchday");
+            if(!competition){
+                interaction.reply(`Die angegebene Competition ${competitionId} existiert nicht oder ist nicht mehr Aktiv`)
+                return
+            }
 
-        const opponent= interaction.options.getUser("opponent")
+            const match = await Match.findOne({
+                matchDay: matchDay!,
+                competitionId: competition.competitionId,
+                $or: [
+                    {
+                        playerOne: interaction.user!.id,
+                        playerTwo: opponent!.id,
+                    },
+                    {
+                        playerOne: opponent!.id,
+                        playerTwo: interaction.user!.id,
+                    },
+                ],
+            })
+            if(!match){
+                interaction.reply(`Das angegebene Match existiert nicht`)
+                return
+            }
 
-        const modal = new ModalBuilder().setCustomId(`matchresult-${interaction.user?.id}`).setTitle("Spielergebnis")
+            const modal = new ModalBuilder().setCustomId(`matchresult-${interaction.user?.id}`).setTitle("Spielergebnis")
 
-        const casAgainstInput = new TextInputBuilder().setCustomId("casAgainst").setLabel("Gegnerische Casualties").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
+            const casAgainstInput = new TextInputBuilder().setCustomId("casAgainst").setLabel("Gegnerische Casualties").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
 
-        const tdForInput = new TextInputBuilder().setCustomId("tdForInput").setLabel("Eigene Touchdowns").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
+            const tdForInput = new TextInputBuilder().setCustomId("tdForInput").setLabel("Eigene Touchdowns").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
 
-        const tdAgainstInput = new TextInputBuilder().setCustomId("tdAgainstInput").setLabel("Gegnerische Touchdowns").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
+            const tdAgainstInput = new TextInputBuilder().setCustomId("tdAgainstInput").setLabel("Gegnerische Touchdowns").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2)
 
-        const casForInput = new TextInputBuilder().setCustomId("casFor").setLabel("Eigene zugefügte Casualties").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2);
+            const casForInput = new TextInputBuilder().setCustomId("casFor").setLabel("Eigene zugefügte Casualties").setStyle(TextInputStyle.Short).setMinLength(1).setMaxLength(2);
 
-        const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(tdForInput);
-        const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(tdAgainstInput);
-        const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(casForInput);
-        const fourthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(casAgainstInput);
+            const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(tdForInput);
+            const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(tdAgainstInput);
+            const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(casForInput);
+            const fourthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(casAgainstInput);
 
 
-        modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow)
+            modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow)
 
-        const match = await Match.findOne({
-            matchDay: interaction.options.getNumber("matchday"),
-            $or: [
-                {
-                    playerOne: interaction.user?.id,
-                    playerTwo: opponent!.id,
-                },
-                {
-                    playerOne: opponent!.id,
-                    playerTwo: interaction.user?.id,
-                },
-            ],
-        })
+            
+            await interaction.showModal(modal);
 
-        if(!match){
-            interaction.reply(`Das angegebene Match zwischen ${interaction.user} und ${opponent} existiert nicht für den Spieltag ${interaction.options.getNumber("matchday")}`)
-            return
-        }
+            const filter = (interaction : any) => interaction.customId === `matchresult-${interaction.user?.id}`
 
-        await interaction.showModal(modal);
+            // wait for modal submit 
 
-        const filter = (interaction : any) => interaction.customId === `matchresult-${interaction.user?.id}`
+            interaction
+                .awaitModalSubmit({filter, time: 360000})
+                .then(async (modalInteraction) => {
+                    
+                    const casForValue = modalInteraction.fields.getTextInputValue("casFor")
+                    const casAgainstValue = modalInteraction.fields.getTextInputValue("casAgainst")
+                    const tdForValue = modalInteraction.fields.getTextInputValue("tdForInput")
+                    const tdAgainstValue = modalInteraction.fields.getTextInputValue("tdAgainstInput")
+                    const winner = this.determineWinner(interaction.user.displayName, opponent?.displayName!, tdForValue, tdAgainstValue);
+                    let resultString: string = "";
+                    if(winner === "unenteschieden"){
+                    resultString = `wurde mit einem Unentschieden angegeben`
+                    }else if(winner === null){
+                        modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Touchdowns in zahlen angegeben sind");
+                        return
+                    }else{
+                        resultString = `wurde als Sieg für ${winner} angegeben`
+                    }
 
-        // wait for modal submit 
+                    if(Number.isNaN(casAgainstValue) || Number.isNaN(casForValue)){
+                        modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Casualties in zahlen angegeben sind");
+                        return
+                    }
 
-        interaction
-            .awaitModalSubmit({filter, time: 360000})
-            .then(async (modalInteraction) => {
-                const casForValue = modalInteraction.fields.getTextInputValue("casFor")
-                const casAgainstValue = modalInteraction.fields.getTextInputValue("casAgainst")
-                const tdForValue = modalInteraction.fields.getTextInputValue("tdForInput")
-                const tdAgainstValue = modalInteraction.fields.getTextInputValue("tdAgainstInput")
-                const winner = this.determineWinner(interaction.user.displayName, opponent?.displayName!, tdForValue, tdAgainstValue);
-                let resultString: string = "";
-                if(winner === "unenteschieden"){
-                 resultString = `wurde mit einem Unentschieden angegeben`
-                }else if(winner === null){
-                    modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Touchdowns in zahlen angegeben sind");
-                    return
-                }else{
-                    resultString = `wurde als Sieg für ${winner} angegeben`
-                }
-
-                if(Number.isNaN(casAgainstValue) || Number.isNaN(casForValue)){
-                    modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Casualties in zahlen angegeben sind");
-                    return
-                }
-
-                const casString = `Außerdem wurden ${casForValue} von ${interaction.user} zugefügte Casualties und ${casAgainstValue} von ${opponent} zugefügte Casualties angegeben`;
-
-                modalInteraction.reply({content: `Dein eingegebenes Spielergebnis für die begegnung ${interaction.user} gegen ${opponent}, ${resultString} mit einem Ergebnis von ${interaction.user}: ${tdForValue} und ${opponent}: ${tdAgainstValue}. \n${casString}. \nBitte Angaben mit reaktion bestätigen ${opponent} & ${interaction.user}`, withResponse:true})
-                    .then(async (messageToBeConfirmed)=> {
-                        if (messageToBeConfirmed.resource?.message) {
-                            await messageToBeConfirmed.resource?.message.react('👍');
-                            await messageToBeConfirmed.resource?.message.react('❌')
-                            if(!await UnConfirmedMatches.exists({matchResultId: messageToBeConfirmed.resource.message.id}))
-                            try{
-                                await UnConfirmedMatches.create({
-                                    matchResultId: messageToBeConfirmed.resource.message.id,
-                                    authorId: interaction.user.id,
-                                    opponentId: opponent!.id,
-                                    tdFor: parseInt(tdForValue),
-                                    tdAgainst: parseInt(tdAgainstValue),
-                                    casFor: parseInt(casForValue),
-                                    casAgainst: parseInt(casAgainstValue),
-                                    confirmReactions: [],
-                                    matchDay: interaction.options.getNumber("matchday")
-                                })
-                            }catch(error){
-                                console.error(error);
-                                interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+                    const casString = `Außerdem wurden ${casForValue} von ${interaction.user} zugefügte Casualties und ${casAgainstValue} von ${opponent} zugefügte Casualties angegeben`;
+                    modalInteraction.reply({content: `Dein eingegebenes Spielergebnis für die begegnung ${interaction.user} gegen ${opponent}, ${resultString} mit einem Ergebnis von ${interaction.user}: ${tdForValue} und ${opponent}: ${tdAgainstValue}. \n${casString}. \nBitte Angaben mit reaktion bestätigen ${opponent} & ${interaction.user}`, withResponse:true})
+                        .then(async (messageToBeConfirmed)=> {
+                            if (messageToBeConfirmed.resource?.message) {
+                                await messageToBeConfirmed.resource?.message.react('👍');
+                                await messageToBeConfirmed.resource?.message.react('❌')
+                                if(!await UnConfirmedMatches.exists({matchResultId: messageToBeConfirmed.resource.message.id}))
+                                try{
+                                    await UnConfirmedMatches.create({
+                                        matchResultId: messageToBeConfirmed.resource.message.id,
+                                        authorId: interaction.user.id,
+                                        opponentId: opponent!.id,
+                                        tdFor: parseInt(tdForValue),
+                                        tdAgainst: parseInt(tdAgainstValue),
+                                        casFor: parseInt(casForValue),
+                                        casAgainst: parseInt(casAgainstValue),
+                                        confirmReactions: [],
+                                        matchDay: matchDay,
+                                        competitionId: competition.competitionId,
+                                    })
+                                }catch(error){
+                                    console.error(error);
+                                    interaction.reply({content: `Fehler beim schreiben in die Datenbank`, flags: [MessageFlags.Ephemeral]})
+                                }
                             }
-                        }
-                    })
+                        })
 
             }).catch((error)=> console.error(error)) 
+        }catch(error){
+            interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            console.error(error);
+        }
     }
 
+    async autocomplete(interaction: AutocompleteInteraction) {
+     
+        const focusedOption = interaction.options.getFocused(true);
+        if(focusedOption.name === "competition"){
+            const competitions = await Competition.find({
+                guildId: interaction.guildId,
+                active: true
+
+            })
+            const choices: IChoice[] =[];
+            
+            competitions.forEach((competition)=>{
+                choices.push({name: competition.competitionName, value: competition.competitionId})
+            })
+            interaction.respond(choices)
+        }
+    }
+    
     private determineWinner(username: string, opponent: string, tdfor: string, tdAgainst: string): string | null{
         const tdForNumber = parseInt(tdfor);
         const tdAgainstNumber = parseInt(tdAgainst);

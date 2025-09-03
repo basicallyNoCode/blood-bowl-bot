@@ -6,5 +6,8 @@ export default interface IDivisionAttendent {
     tdFor: number,
     tdAgainst:number,
     casFor: number,
-    casAgainst: number  
+    casAgainst: number,
+    wins: number,
+    draws: number, 
+    losses: number,
 }

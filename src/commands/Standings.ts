@@ -17,7 +17,7 @@ export default class Standings extends Command{
             category: Category.UTILITIES,
             default_member_permissions: PermissionsBitField.Flags.UseApplicationCommands,
             dm_permession: true,
-            cooldown: 3,
+            cooldown: 600,
             options: [
                 {
                     name: "competition",
@@ -61,9 +61,9 @@ export default class Standings extends Command{
                     },
                     {
                         $sort: {
-                        points: -1,     // highest points first
-                        tdDiff: -1,     // then tdDiff
-                        casDiff: -1     // then casDiff
+                        points: -1,     
+                        tdDiff: -1,     
+                        casDiff: -1    
                         }
                     }
                 ]);

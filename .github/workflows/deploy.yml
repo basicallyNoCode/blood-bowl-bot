@@ -32,5 +32,5 @@ jobs:
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
           uploads: |
-            ./build => ./home/container/build
-            ./node_modules/ => ./home/container/node_modules
+            ./build => ./build
+          delete: true

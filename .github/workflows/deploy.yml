@@ -1,29 +1,31 @@
 name: Build and Deploy Bot
-on: 
+
+on:
   push:
     branches:
-      - main
-jobs: 
+      - main  # change if your main branch is named differently
+
+jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
-      uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with: 
-        node-version: 22
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20  # match your runtime
 
       - name: Install dependencies
-      run: npm ci
+        run: npm ci
 
-      - name: Build Project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-      - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: bot-dist
-        path: build/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: bot-dist
+          path: dist/

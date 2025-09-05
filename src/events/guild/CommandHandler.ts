@@ -41,13 +41,16 @@ export default class CommandHandler extends Event{
             
             if(timestamps.has(interaction.user.id) 
             && (now < (timestamps.get(interaction.user.id)|| 0) + cooldownAmount)){
-                const cooldownRemaining = ((((timestamps.get(interaction.user.id)||0)+ cooldownAmount) - now)/ 1000).toFixed(1)
+                const cooldownRemaining = ((((timestamps.get(interaction.user.id)||0)+ cooldownAmount) - now)/ 1000)
+                const coolDownMinutes = Math.floor(cooldownRemaining/60);
+                const cooldownSeconds = (cooldownRemaining % 60).toFixed(0)
+                const cooldownString = `\`${coolDownMinutes}:${cooldownSeconds}\` minuten`
                 interaction.reply(
                     {
                         embeds: [
                             new EmbedBuilder()
                             .setColor(0x0099FF)
-                            .setDescription(`Dieses Command kann aktuell nicht benutzt werden bitte warte \`${cooldownRemaining}\` sekunden`)
+                            .setDescription(`Dieses Command kann aktuell nicht benutzt werden bitte warte ${cooldownString}`)
                         ],
                         ephemeral: true,
                     }

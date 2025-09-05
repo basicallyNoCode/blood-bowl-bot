@@ -7,6 +7,7 @@ import UnConfirmedMatches from "../base/schemas/UnConfirmedMatches.js";
 import Match from "../base/schemas/Match.js";
 import { IChoice } from "../base/interfaces/IChoice.js";
 import Competition from "../base/schemas/Competition.js";
+import { tieString } from "../base/util/constants.js";
 
 export default class RecordMatchResultModal extends Command{
     constructor(client: CustomClient){
@@ -70,6 +71,10 @@ export default class RecordMatchResultModal extends Command{
                 await interaction.reply(`Das angegebene Match existiert nicht`)
                 return
             }
+            if(match.gamePlayedAndConfirmed){
+                await interaction.reply(`Das angegebene Match wurde bereits in die Tabelle eingetragen`)
+                return
+            }
 
             const modal = new ModalBuilder().setCustomId(`matchresult-${interaction.user?.id}`).setTitle("Spielergebnis")
 
@@ -106,8 +111,8 @@ export default class RecordMatchResultModal extends Command{
                     const tdAgainstValue = modalInteraction.fields.getTextInputValue("tdAgainstInput")
                     const winner = this.determineWinner(interaction.user.displayName, opponent?.displayName!, tdForValue, tdAgainstValue);
                     let resultString: string = "";
-                    if(winner === "unenteschieden"){
-                    resultString = `wurde mit einem Unentschieden angegeben`
+                    if(winner === tieString){
+                        resultString = `wurde mit einem Unentschieden angegeben`
                     }else if(winner === null){
                         await modalInteraction.reply("Es ist ein fehler aufgetreten bitte stelle sicher, dass deine und die Gegnereischen Touchdowns in zahlen angegeben sind");
                         return
@@ -183,7 +188,7 @@ export default class RecordMatchResultModal extends Command{
         }else if(tdForNumber < tdAgainstNumber){
             return opponent;
         }else{
-            return "unentschieden";
+            return tieString;
         }
     }
 }

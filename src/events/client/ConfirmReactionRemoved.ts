@@ -44,27 +44,43 @@ export default class ConfirmReactionRemoved extends Event {
 
         await enqueueReaction(reaction.message.id, async () => {
             try{
+                if(reaction.partial){
+                    try {
+                        await reaction.fetch();
+                    } catch (error) {
+                        console.error("Error fetching reaction:", error);
+                        return;
+                    }
+                }
+                if (reaction.message.partial) {
+                    try {
+                        await reaction.message.fetch();
+                    } catch (error) {
+                        console.error("Error fetching message:", error);
+                        return;
+                    }
+                }
                 const messageId = reaction.message.id;
                 const unConfirmedMatch = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
                 if(unConfirmedMatch){
                     if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
-                        if(reaction.emoji.name == ConfirmRections.CONFIRM){
-                            unConfirmedMatch.confirmReactions = unConfirmedMatch.confirmReactions.filter((r) => {
-                                if(user.id == r.authorId){
-                                    return !r.agreed;
-
-                                }else{
-                                    return true
-                                }
-                            })
-                            try{
-                                await unConfirmedMatch.save()
-                                await ConfirmReactionEntry.deleteMany({matchResultId: messageId, authorId: user.id  })
-                            } catch(error){
-                                console.error("error when removing confirmReaction or unConfirmed match", error);
+                        try{
+                            const reactionToRemove = await ConfirmReactionEntry.findOne(
+                                { matchResultId: messageId, authorId: user.id },
+                                "_id"
+                            );
+                            if(reactionToRemove){
+                                await UnConfirmedMatches.updateOne(
+                                    { matchResultId: messageId },
+                                    //@ts-ignore mongoose error
+                                    { $pull: { confirmReactions: reactionToRemove._id } }
+                                    );
+                                    await ConfirmReactionEntry.deleteOne({ matchResultId: messageId, authorId: user.id });
                             }
-                        }      
-                    }
+                        } catch(error){
+                            console.error("error when removing confirmReaction or unConfirmed match", error);
+                        }
+                    }      
                 }
             }catch(error){
                 console.error("error when trying to handle Remove Reaction", error)

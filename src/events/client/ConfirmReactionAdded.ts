@@ -11,6 +11,7 @@ import DivisionAttendent from "../../base/schemas/DivisionAttendent.js";
 import Division from "../../base/schemas/Division.js";
 import Competition from "../../base/schemas/Competition.js";
 import { enqueueReaction } from "../../base/util/reactionQueue.js";
+import IConfirmReaction from "../../base/interfaces/IConfirmReaction.js";
 
 export default class ConfirmReactionAdded extends Event{
     reactionQueues: Collection<string, Promise<void>>;
@@ -55,15 +56,17 @@ export default class ConfirmReactionAdded extends Event{
                     if(unConfirmedMatch){
                         if(!user.bot && (user.id == unConfirmedMatch.authorId || user.id == unConfirmedMatch.opponentId)){
                             if(reaction.emoji.name == ConfirmRections.CONFIRM || reaction.emoji.name == ConfirmRections.DENY){
-                                const confirmReaction = new ConfirmReactionEntry({
-                                    matchResultId: messageId,
-                                    authorId: user.id,
-                                    agreed: this.isAgreed(reaction.emoji.name)
-                                })
+                                const confirmReaction = await ConfirmReactionEntry.findOneAndUpdate(
+                                    { matchResultId: messageId, authorId: user.id },
+                                    { $set: { agreed: this.isAgreed(reaction.emoji.name)} },
+                                    { new: true, upsert: true }
+                                )
                                 try{
-                                    await confirmReaction.save();
                                     //@ts-ignore cant get rid of this
-                                    unConfirmedMatch.confirmReactions.push(confirmReaction._id);
+                                    if (!unConfirmedMatch.confirmReactions.some(r => r.equals(confirmReaction._id))) {
+                                        //@ts-ignore cant get rid of this
+                                        unConfirmedMatch.confirmReactions.push(confirmReaction._id);
+                                      }
                                     await unConfirmedMatch.save();
                                 } catch(error){
                                     console.error("error when saviing confirmReaction or unConfirmed match", error);
@@ -75,7 +78,13 @@ export default class ConfirmReactionAdded extends Event{
                             const checkableMatchResult = await UnConfirmedMatches.findOne({matchResultId: messageId}).populate("confirmReactions");
                             let matchConfirmed = false;
                             if(checkableMatchResult){
-                                if(checkableMatchResult.confirmReactions.filter((reaction)=> reaction.agreed == false).length >= 1){
+                                const confirmReactionsMap = new Collection<string, boolean>();
+                                checkableMatchResult.confirmReactions.forEach((reaction) =>{
+                                    confirmReactionsMap.set(reaction.authorId, reaction.agreed);
+                                })
+                                const bothConfirmed = confirmReactionsMap.size === 2 && [...confirmReactionsMap.values()].every(v => v === true);
+                                const anyDenied = [...confirmReactionsMap.values()].some(v => v === false);
+                                if(anyDenied){
                                     let pingUser = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user
                                     if(!pingUser){
                                         await reaction.message.guild?.members.fetch(nonReactionPlayer).then((guildMember)=>{
@@ -85,121 +94,119 @@ export default class ConfirmReactionAdded extends Event{
                                     await reaction.message.reply(`${user} hat das match Abgelehnt, das match wird nicht erfasst und muss über den /matchresult befehl erneut eingetragen werden. \nFYI ${pingUser}`)
                                     matchConfirmed = true;
                                 }
-                                if (checkableMatchResult.confirmReactions.length >= 2){
-                                    if(checkableMatchResult.confirmReactions.filter((reaction) => reaction.agreed == true).length <= 2){
-                                        const match = await Match.findOne({
-                                            matchDay: checkableMatchResult.matchDay,
-                                            competitionId: checkableMatchResult.competitionId,
-                                            $or: [
-                                                {
-                                                    playerOne: user?.id,
-                                                    playerTwo: nonReactionPlayer,
-                                                },
-                                                {
-                                                    playerOne: nonReactionPlayer,
-                                                    playerTwo: user?.id,
-                                                },
-                                            ],
-                                        })
-                                        if(!match){
-                                            await reaction.message.reply(`Das angegebene Match existiert nicht`)
-                                            return
-                                        }
+                                if (bothConfirmed){
+                                    const match = await Match.findOne({
+                                        matchDay: checkableMatchResult.matchDay,
+                                        competitionId: checkableMatchResult.competitionId,
+                                        $or: [
+                                            {
+                                                playerOne: user?.id,
+                                                playerTwo: nonReactionPlayer,
+                                            },
+                                            {
+                                                playerOne: nonReactionPlayer,
+                                                playerTwo: user?.id,
+                                            },
+                                        ],
+                                    })
+                                    if(!match){
+                                        await reaction.message.reply(`Das angegebene Match existiert nicht`)
+                                        return
+                                    }
 
-                                        const playerResultsRecordingPlayer = new PlayerResult({
-                                            userId: checkableMatchResult.authorId,
-                                            touchdonws: checkableMatchResult.tdFor,
-                                            casualties: checkableMatchResult.casFor,
-                                            divisionId: match.divisionId,
-                                        })
+                                    const playerResultsRecordingPlayer = new PlayerResult({
+                                        userId: checkableMatchResult.authorId,
+                                        touchdonws: checkableMatchResult.tdFor,
+                                        casualties: checkableMatchResult.casFor,
+                                        divisionId: match.divisionId,
+                                    })
 
-                                        const playerResultOpponent = new PlayerResult({
-                                            userId: checkableMatchResult.opponentId,
-                                            touchdonws: checkableMatchResult.tdAgainst,
-                                            casualties: checkableMatchResult.casAgainst,
-                                            divisionId: match.divisionId,
-                                        })
+                                    const playerResultOpponent = new PlayerResult({
+                                        userId: checkableMatchResult.opponentId,
+                                        touchdonws: checkableMatchResult.tdAgainst,
+                                        casualties: checkableMatchResult.casAgainst,
+                                        divisionId: match.divisionId,
+                                    })
 
-                                        const division = await Division.findOne({divisionId: match.divisionId}).populate("divisionAttendents");
-                                        if(!division){
-                                            await reaction.message.reply("Die Division des Matches existiert nicht")
-                                            return
-                                        }
+                                    const division = await Division.findOne({divisionId: match.divisionId}).populate("divisionAttendents");
+                                    if(!division){
+                                        await reaction.message.reply("Die Division des Matches existiert nicht")
+                                        return
+                                    }
 
 
-                                        const competition = await Competition.findOne({competitionId: division!.competitionId, active: true})
-                                        if(!competition){
-                                            await reaction.message.reply("Die Competition des Matches existiert nicht oder ist nicht mehr Aktiv")
-                                            return
-                                        }
-                
-                                        const recordingAttendent = await DivisionAttendent.findOne({
-                                            divisionId: match.divisionId,
-                                            userId: checkableMatchResult.authorId,
-                                        })
-                                        
-                                        const opposingAttendent = await DivisionAttendent.findOne({
-                                            divisionId: match.divisionId,
-                                            userId: checkableMatchResult.opponentId,
-                                        })
+                                    const competition = await Competition.findOne({competitionId: division!.competitionId, active: true})
+                                    if(!competition){
+                                        await reaction.message.reply("Die Competition des Matches existiert nicht oder ist nicht mehr Aktiv")
+                                        return
+                                    }
+            
+                                    const recordingAttendent = await DivisionAttendent.findOne({
+                                        divisionId: match.divisionId,
+                                        userId: checkableMatchResult.authorId,
+                                    })
+                                    
+                                    const opposingAttendent = await DivisionAttendent.findOne({
+                                        divisionId: match.divisionId,
+                                        userId: checkableMatchResult.opponentId,
+                                    })
 
-                                        if(!recordingAttendent || !opposingAttendent){
-                                            await reaction.message.reply("Das Match ist nicht zwischen 2 Liga Mitgliedern ausgetragen worden")
-                                            return
-                                        }
+                                    if(!recordingAttendent || !opposingAttendent){
+                                        await reaction.message.reply("Das Match ist nicht zwischen 2 Liga Mitgliedern ausgetragen worden")
+                                        return
+                                    }
 
-                                        recordingAttendent.tdFor = (recordingAttendent.tdFor ?? 0) + (checkableMatchResult.tdFor ?? 0);
-                                        recordingAttendent.casFor = (recordingAttendent.casFor ?? 0) + (checkableMatchResult.casFor ?? 0);
-                                        recordingAttendent.tdAgainst = (recordingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
-                                        recordingAttendent.casAgainst = (recordingAttendent.casAgainst ?? 0) + (checkableMatchResult.casAgainst ?? 0);
+                                    recordingAttendent.tdFor = (recordingAttendent.tdFor ?? 0) + (checkableMatchResult.tdFor ?? 0);
+                                    recordingAttendent.casFor = (recordingAttendent.casFor ?? 0) + (checkableMatchResult.casFor ?? 0);
+                                    recordingAttendent.tdAgainst = (recordingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
+                                    recordingAttendent.casAgainst = (recordingAttendent.casAgainst ?? 0) + (checkableMatchResult.casAgainst ?? 0);
 
-                                        opposingAttendent.tdFor = (opposingAttendent.tdFor ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
-                                        opposingAttendent.casFor = (opposingAttendent.casFor ?? 0) + (checkableMatchResult.casAgainst ?? 0);
-                                        opposingAttendent.tdAgainst = (opposingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdFor ?? 0);
-                                        opposingAttendent.casAgainst = (opposingAttendent.casAgainst ?? 0) + (checkableMatchResult.casFor ?? 0);
+                                    opposingAttendent.tdFor = (opposingAttendent.tdFor ?? 0) + (checkableMatchResult.tdAgainst ?? 0);
+                                    opposingAttendent.casFor = (opposingAttendent.casFor ?? 0) + (checkableMatchResult.casAgainst ?? 0);
+                                    opposingAttendent.tdAgainst = (opposingAttendent.tdAgainst ?? 0) + (checkableMatchResult.tdFor ?? 0);
+                                    opposingAttendent.casAgainst = (opposingAttendent.casAgainst ?? 0) + (checkableMatchResult.casFor ?? 0);
 
-                                        const winPoints = competition.winPoints ?? 0;
-                                        const lossPoints = competition.lossPoints ?? 0;
-                                        const drawPoints = competition.drawPoints ?? 0;
+                                    const winPoints = competition.winPoints ?? 0;
+                                    const lossPoints = competition.lossPoints ?? 0;
+                                    const drawPoints = competition.drawPoints ?? 0;
 
-                                        if(playerResultsRecordingPlayer.touchdonws > playerResultOpponent.touchdonws){
-                                            recordingAttendent.points = (recordingAttendent.points ?? 0) + winPoints
-                                            opposingAttendent.points = (opposingAttendent.points ?? 0) + lossPoints
-                                            recordingAttendent.wins = (recordingAttendent.wins ?? 0) + 1
-                                            opposingAttendent.losses = (opposingAttendent.losses ?? 0) + 1
-                                        }else if(playerResultsRecordingPlayer.touchdonws < playerResultOpponent.touchdonws){
-                                            recordingAttendent.points = (recordingAttendent.points ?? 0) + lossPoints
-                                            opposingAttendent.points = (opposingAttendent.points ?? 0) + winPoints
-                                            recordingAttendent.losses = (recordingAttendent.losses ?? 0) + 1
-                                            opposingAttendent.wins = (opposingAttendent.wins ?? 0) + 1
-                                        }else if(playerResultsRecordingPlayer.touchdonws === playerResultOpponent.touchdonws){
-                                            recordingAttendent.points = (recordingAttendent.points ?? 0) + drawPoints
-                                            opposingAttendent.points = (opposingAttendent.points ?? 0) + drawPoints
-                                            recordingAttendent.draws = (recordingAttendent.draws ?? 0) + 1
-                                            opposingAttendent.draws = (opposingAttendent.draws ?? 0) + 1
-                                        }
-                                        
-                                        await recordingAttendent.save();
-                                        await opposingAttendent.save();
+                                    if(playerResultsRecordingPlayer.touchdonws > playerResultOpponent.touchdonws){
+                                        recordingAttendent.points = (recordingAttendent.points ?? 0) + winPoints
+                                        opposingAttendent.points = (opposingAttendent.points ?? 0) + lossPoints
+                                        recordingAttendent.wins = (recordingAttendent.wins ?? 0) + 1
+                                        opposingAttendent.losses = (opposingAttendent.losses ?? 0) + 1
+                                    }else if(playerResultsRecordingPlayer.touchdonws < playerResultOpponent.touchdonws){
+                                        recordingAttendent.points = (recordingAttendent.points ?? 0) + lossPoints
+                                        opposingAttendent.points = (opposingAttendent.points ?? 0) + winPoints
+                                        recordingAttendent.losses = (recordingAttendent.losses ?? 0) + 1
+                                        opposingAttendent.wins = (opposingAttendent.wins ?? 0) + 1
+                                    }else if(playerResultsRecordingPlayer.touchdonws === playerResultOpponent.touchdonws){
+                                        recordingAttendent.points = (recordingAttendent.points ?? 0) + drawPoints
+                                        opposingAttendent.points = (opposingAttendent.points ?? 0) + drawPoints
+                                        recordingAttendent.draws = (recordingAttendent.draws ?? 0) + 1
+                                        opposingAttendent.draws = (opposingAttendent.draws ?? 0) + 1
+                                    }
+                                    
+                                    await recordingAttendent.save();
+                                    await opposingAttendent.save();
 
-                                        await playerResultsRecordingPlayer.save();
-                                        await playerResultOpponent.save();
-                                        //@ts-ignore
-                                        match.playerResults.push(playerResultsRecordingPlayer._id, playerResultOpponent._id)
-                                        match.gamePlayedAndConfirmed = true,
-                                        match.save();
+                                    await playerResultsRecordingPlayer.save();
+                                    await playerResultOpponent.save();
+                                    //@ts-ignore
+                                    match.playerResults.push(playerResultsRecordingPlayer._id, playerResultOpponent._id)
+                                    match.gamePlayedAndConfirmed = true,
+                                    match.save();
 
-                                        let nonReactionPlayerUser = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user
-                                        if(!nonReactionPlayerUser){
-                                            nonReactionPlayerUser = (await reaction.message.guild?.members.fetch(nonReactionPlayer))!.user
-                                        }
-                                        await reaction.message.reply(`${user} und ${nonReactionPlayerUser} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
-                                        matchConfirmed = true
-                                    }   
-                                }
-                                if(matchConfirmed){
-                                    this.cleanDatabase(messageId);
-                                }
+                                    let nonReactionPlayerUser = reaction.message.guild?.members.cache.get(nonReactionPlayer)?.user
+                                    if(!nonReactionPlayerUser){
+                                        nonReactionPlayerUser = (await reaction.message.guild?.members.fetch(nonReactionPlayer))!.user
+                                    }
+                                    await reaction.message.reply(`${user} und ${nonReactionPlayerUser} hat das match bestätigt. Das Match wird in die Tabelle eingetragen`)
+                                    matchConfirmed = true
+                                }   
+                            }
+                            if(matchConfirmed){
+                                this.cleanDatabase(messageId);
                             }
                         }
                     }

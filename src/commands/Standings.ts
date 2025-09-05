@@ -108,7 +108,7 @@ export default class Standings extends Command{
             const file = new AttachmentBuilder(pdfBuffer).setName(`${competition.competitionName}-${fileString}.pdf`)
             await interaction.editReply({content: `@here Die Aktuelle Tabelle für die Competition ${competition.competitionName}`, files:[file]})
         }catch(error){
-            await interaction.reply("Es ist ein fehler aufgetreten, Versuche es später erneut")
+            await interaction.editReply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
         }
     }

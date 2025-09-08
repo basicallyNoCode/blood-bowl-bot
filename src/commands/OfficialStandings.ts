@@ -12,10 +12,10 @@ import puppeteer from "puppeteer";
 export default class Standings extends Command{
     constructor(client: CustomClient){
         super(client, {
-            name:"standings",
+            name:"official-standings",
             description: "Tabelle ausgeben ",
             category: Category.UTILITIES,
-            default_member_permissions: PermissionsBitField.Flags.UseApplicationCommands,
+            default_member_permissions: PermissionsBitField.Flags.Administrator,
             dm_permession: true,
             cooldown: 600,
             options: [
@@ -32,7 +32,7 @@ export default class Standings extends Command{
 
     async execute(interaction: ChatInputCommandInteraction){
         try{
-            await interaction.deferReply({flags:[MessageFlags.Ephemeral]});
+            await interaction.deferReply();
             const competitionId = interaction.options.getString("competition");
             const competition = await Competition.findOne({competitionId: competitionId})
             
@@ -105,8 +105,16 @@ export default class Standings extends Command{
             const currentDate = new Date()
             const dateString = currentDate.toLocaleDateString("de", {month:"2-digit", day:"2-digit", year: "numeric", })
             const fileString = dateString.split('.').join('-');
-            const file = new AttachmentBuilder(pdfBuffer).setName(`${competition.competitionName}-${fileString}-${interaction.user.displayName}.pdf`)
-            await interaction.editReply({content: `Die Aktuelle Tabelle für die Competition ${competition.competitionName}`, files:[file]})
+            const file = new AttachmentBuilder(pdfBuffer).setName(`${competition.competitionName}-${fileString}.pdf`)
+            await interaction.editReply({content: `@everyone Die Aktuelle Tabelle für die Competition ${competition.competitionName}`, files:[file]})
+            const message = await interaction.fetchReply();
+            const pinnedMessages = await interaction.channel?.messages.fetchPins();
+            pinnedMessages?.items.forEach((item) => {
+                if (item.message.author.id === this.client.user!.id){
+                    item.message.unpin();
+                }
+            })
+            message.pin()
         }catch(error){
             await interaction.editReply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);

@@ -38,7 +38,7 @@ jobs:
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
           uploads: |
-            ./build => ./build
+            ./build/* => ./build
           delete: true
 
   deploy:

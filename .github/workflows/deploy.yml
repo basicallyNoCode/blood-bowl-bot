@@ -27,7 +27,6 @@ jobs:
 
       - name: SFTP Upload
         uses: Dylan700/sftp-upload-action@v1.2.3
-        run: ls ./build -a 
         timeout-minutes: 5
         continue-on-error: true
         with:
@@ -35,6 +34,7 @@ jobs:
           username: ${{ secrets.CYBRANCEE_USERNAME }}
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
+          dry-run: true
           uploads: |
             ./build => ./build
           delete: true

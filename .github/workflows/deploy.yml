@@ -34,7 +34,6 @@ jobs:
           username: ${{ secrets.CYBRANCEE_USERNAME }}
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
-          dry-run: true
           uploads: |
             ./build => ./build
           delete: true

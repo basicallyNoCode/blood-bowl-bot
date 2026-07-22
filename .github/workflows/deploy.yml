@@ -25,7 +25,7 @@ jobs:
       - name: Build project
         run: npm run buildProject
 
-      -name: show BuildFolder
+      - name: show BuildFolder
         run: ls -a
 
       - name: SFTP Upload

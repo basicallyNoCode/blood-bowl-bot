@@ -25,11 +25,9 @@ jobs:
       - name: Build project
         run: npm run buildProject
 
-      - name: show BuildFolder
-        run: ls ./build -a
-
       - name: SFTP Upload
         uses: Dylan700/sftp-upload-action@v1.2.3
+        run: ls ./build -a 
         timeout-minutes: 5
         continue-on-error: true
         with:
@@ -38,7 +36,7 @@ jobs:
           password: ${{ secrets.CYBRANCEE_PASSWORD }}
           port: ${{ vars.CYBRANCEE_PORT }}
           uploads: |
-            ./build/* => ./build
+            ./build => ./build
           delete: true
 
   deploy:

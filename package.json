@@ -7,6 +7,7 @@
   "scripts": {
     "clean": "rm -rf build",
     "build": "npm run clean && tsc --build",
+    "buildProject": "tsc --build",
     "start": "npm run build && node build/index.js"
   },
   "author": "basicallynocode",

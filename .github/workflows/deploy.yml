@@ -23,7 +23,10 @@ jobs:
         run: npm ci
 
       - name: Build project
-        run: npm run build
+        run: npm run buildProject
+
+      -name: show BuildFolder
+        run: ls -a
 
       - name: SFTP Upload
         uses: Dylan700/sftp-upload-action@v1.2.3

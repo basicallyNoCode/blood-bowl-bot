@@ -8,14 +8,15 @@ import Division from "../base/schemas/Division.js";
 import IStanding from "../base/interfaces/IStanding.js";
 import DivisionAttendent from "../base/schemas/DivisionAttendent.js";
 import puppeteer from "puppeteer";
+import IMatch from "../base/interfaces/IMatch.js";
 
 export default class Standings extends Command{
     constructor(client: CustomClient){
         super(client, {
-            name:"standings",
-            description: "Tabelle ausgeben ",
+            name:"match-overview",
+            description: "Übersicht über alle matches",
             category: Category.UTILITIES,
-            default_member_permissions: PermissionsBitField.Flags.UseApplicationCommands,
+            default_member_permissions: PermissionsBitField.Flags.Administrator,
             dm_permession: true,
             cooldown: 600,
             options: [
@@ -33,7 +34,6 @@ export default class Standings extends Command{
     async execute(interaction: ChatInputCommandInteraction){
         try{
             await interaction.deferReply();
-            const guildeMembers = interaction.guild?.members.cache;
             const competitionId = interaction.options.getString("competition");
             const competition = await Competition.findOne({competitionId: competitionId})
             
@@ -41,77 +41,39 @@ export default class Standings extends Command{
                 await interaction.reply(`Die angegebene Competition existiert nicht oder ist nicht mehr Aktiv`)
                 return
             }
-            const divisions = await Division.find({competitionId: competitionId}).populate("divisionAttendents");
+            const divisions = await Division.find({competitionId: competitionId}).populate("matches");
             if(divisions.length ===0 ){
                 await interaction.reply(`Die angegebene Competition hat keine Divisionen`)
                 return
             }
-            const standings : Collection<string, IStanding[]> = new Collection();
-            const filteredDivisions = divisions.filter((div)=>{return div.divisionAttendents.length >= 2 && div.matches.length >= 2})
+            const filteredDivisions = divisions.filter((div)=>{return div.matches.length >= 0})
+            const divisionMatchDays = new Collection<string,Collection<number,IMatch[]>>;
             for(const fDiv of filteredDivisions){
-                const divStandings: IStanding[] = [];
-                const sortedAttendents = await DivisionAttendent.aggregate([
-                    {
-                        $match: { divisionId: fDiv.divisionId }
-                    },
-                    {
-                        $addFields: {
-                        tdDiff: { $subtract: ["$tdFor", "$tdAgainst"] },
-                        casDiff: { $subtract: ["$casFor", "$casAgainst"] }
-                        }
-                    },
-                    {
-                        $sort: {
-                        points: -1,     
-                        tdDiff: -1,     
-                        casDiff: -1    
-                        }
-                    }
-                ]);
-
-                let currentRank = 1;
-                if(sortedAttendents.length > 0){
-                    sortedAttendents.forEach((attendent, index)=>{
-                        if(index >0){
-                            const prevAttendent = sortedAttendents[index - 1]
-                            const tiedRank = ( attendent.points === prevAttendent.points
-                            && (attendent.tdFor - attendent.tdAgainst) === (prevAttendent.tdFor - prevAttendent.tdAgainst)
-                            && (attendent.casFor - attendent.casAgainst) === (prevAttendent.casFor - prevAttendent.casAgainst)
-                            )
-
-                            if(!tiedRank){
-                                currentRank = index + 1
-                            }
-                        }
-                        const guildMember = guildeMembers?.get(attendent.userId);
-                        let userName = guildMember?.displayName ? guildMember.displayName : guildMember?.user.username;
-                        divStandings.push({
-                            playerName: attendent.shownName,
-                            playerUsername: userName? userName : "",
-                            rank: currentRank,
-                            points: attendent.points ?? 0,
-                            tdDiff: (attendent.tdFor ?? 0) - (attendent.tdAgainst ?? 0),
-                            casDiff: (attendent.casFor ?? 0) - (attendent.casAgainst ?? 0),
-                            wins: attendent.wins ?? 0,
-                            draws: attendent.draws ?? 0,
-                            losses: attendent.losses,
-                            matchesPlayed: (attendent.wins ?? 0) + (attendent.draws ?? 0) + (attendent.losses ?? 0)
-                        })
-
-                    })
+                const matchDayCollection = new Collection<number, IMatch[]>;
+                for(const match of fDiv.matches){
+                    if (!matchDayCollection.has(match.matchDay)) {
+                        matchDayCollection.set(match.matchDay, []);
+                      }
+                      matchDayCollection.get(match.matchDay)?.push(match);
                 } 
                 const divName = fDiv.divisionId.split("-").pop();
-                if(divStandings.length > 0 && divName){
-                    standings.set(divName, divStandings);
-                }
+                divisionMatchDays.set(divName!, matchDayCollection);
             }
-            const html = this.generateOuterHtml(standings);
+            const html = this.generateOuterHtml(divisionMatchDays);
             const pdfBuffer = await this.generatePDFBuffer(html);
             const currentDate = new Date()
             const dateString = currentDate.toLocaleDateString("de", {month:"2-digit", day:"2-digit", year: "numeric", })
             const fileString = dateString.split('.').join('-');
             const file = new AttachmentBuilder(pdfBuffer).setName(`${competition.competitionName}-${fileString}.pdf`)
-            await interaction.editReply({content: `@here Die Aktuelle Tabelle für die Competition ${competition.competitionName}`, files:[file]})
+            await interaction.editReply({content: `@everyone Die Aktuelle Tabelle für die Competition ${competition.competitionName}`, files:[file]})
+            const message = await interaction.fetchReply();
+            const pinnedMessages = await interaction.channel?.messages.fetchPins();
+            pinnedMessages?.items.forEach((item) => {
+                if (item.message.author.id === this.client.user!.id){
+                    item.message.unpin();
+                }
+            })
+            message.pin()
         }catch(error){
             await interaction.editReply("Es ist ein fehler aufgetreten, Versuche es später erneut")
             console.error(error);
@@ -134,9 +96,9 @@ export default class Standings extends Command{
         }
     }
 
-    private generateOuterHtml(standings : Collection<string, IStanding[]>){
-        const divisionTablesHtml = standings.map((standings, division)=>{
-            const divisionTable = this.generateDivsionStandingTable(division, standings);
+    private generateOuterHtml(divMatchDays : Collection<string, Collection<number, IMatch[]>>){
+        const divisionTablesHtml = divMatchDays.map((standings, division)=>{
+            const divisionTable = this.generateDivisionRows(division, standings);
             return `${divisionTable}`
         }).join("")
         return `
@@ -148,21 +110,24 @@ export default class Standings extends Command{
                         h1 { color: #333; text-align: center; }
                         h2 { color: #333; text-align: center; }
                         table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 0 0 1px 0 solid #6e6c6b; padding: 8px; text-align: left; },
+                        th, td { border: 0 0 1px 0 solid #6e6c6b; padding: 20px; text-align: left; },
                         th { background-color: #e0dede; }
                         tr:nth-child(even) { background-color: #e0dede; }
                     </style>
                 </head>
                 <body> 
-                    <h1>Tabelle: </h1>
+                    <h1>Gespielte Matches: </h1>
                     ${divisionTablesHtml}
                 </body>
             </html>
         `
     }
 
-    private generateDivsionStandingTable(division: string, standings: IStanding[]){
-            const rows = this.generateDivisionStandingRowsHtml(standings);
+    private generateDivisionRows(division: string, matchDayMatches: Collection<number, IMatch[]>){
+            const rows = matchDayMatches.map((match, matchday)=>{
+                const matchdayTable = this.generateMatchDayRows(matchday, match);
+                return `${matchdayTable}`
+            }).join("")
             return `
                 <h2>${division}</h2>
                 <table>
@@ -183,23 +148,11 @@ export default class Standings extends Command{
                 </table>`
     }
 
-    private generateDivisionStandingRowsHtml(standings: IStanding[]){
-        const rows = standings.map((standing)=>{
-            let nameString = standing.playerName;
-            if (standing.playerUsername !== ""){
-                nameString += ` (${standing.playerUsername})`
-            } 
+    private generateMatchDayRows(matchday: number ,matches: IMatch[]){
+        const rows = matches.map((matches)=>{
             return `
                 <tr>
-                    <td>${standing.rank}</td>
-                    <td>${nameString}</td>
-                    <td>${standing.points}</td>
-                    <td>${standing.tdDiff}</td>
-                    <td>${standing.casDiff}</td>
-                    <td>${standing.matchesPlayed}</td>
-                    <td>${standing.wins}</td>
-                    <td>${standing.draws}</td>
-                    <td>${standing.losses?? 0}</td>
+                    
                 </tr>
             `
         }).join("");
@@ -216,12 +169,17 @@ export default class Standings extends Command{
             await page.setContent(html);
             const pdfBuffer = await page.pdf({
                 format: "A4",
-                printBackground: true
+                printBackground: true,
+                landscape:true,
             })
             return Buffer.from(pdfBuffer);
         }finally{
             browser.close();
         }
+    }
+    
+    private getStickerRotation(){
+        return (Math.random() * 10 - 5).toFixed(1);
     }
 }
 

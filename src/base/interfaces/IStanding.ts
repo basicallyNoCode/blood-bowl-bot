@@ -1,5 +1,6 @@
 export default interface IStanding{
     playerName: string,
+    playerUsername: string,
     rank: number, 
     points: number,
     tdDiff: number,

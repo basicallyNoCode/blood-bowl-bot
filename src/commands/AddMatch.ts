@@ -9,11 +9,11 @@ import DivisionAttendent from "../base/schemas/DivisionAttendent.js";
 import Match from "../base/schemas/Match.js";
 import { IChoice } from "../base/interfaces/IChoice.js";
 
-export default class AddAttendend extends Command{
+export default class AddMatch extends Command{
     constructor(client: CustomClient){
         super(client, {
             name:"addmatch",
-            description: "Spieler zur division hinzufügen ",
+            description: "Match zur division hinzufügen ",
             category: Category.UTILITIES,
             default_member_permissions: PermissionsBitField.Flags.Administrator,
             dm_permession: true,

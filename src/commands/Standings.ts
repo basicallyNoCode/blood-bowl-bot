@@ -84,7 +84,7 @@ export default class Standings extends Command{
                             }
                         }
                         const guildMember = guildeMembers?.get(attendent.userId);
-                        let userName = guildMember?.displayName ? guildMember.displayName : guildMember?.user.username;
+                        const userName = guildMember?.displayName ? guildMember.displayName : guildMember?.user.username;
                         divStandings.push({
                             playerName: attendent.shownName,
                             playerUsername: userName? userName : "",
